@@ -1,0 +1,751 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "updates": [
+                    "message"
+                ],
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegramTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                -384,
+                -144
+            ],
+            "id": "0b395051-c6b7-4e66-9c99-4aad1792bb7e",
+            "name": "Telegram Trigger",
+            "webhookId": "bharat-biz-owner",
+            "credentials": {
+                "telegramApi": {
+                    "id": "0nEO0bW3fZqANpZ8",
+                    "name": "shopkeeper-neurathon"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "is-voice",
+                            "leftValue": "={{ $json.message.voice }}",
+                            "rightValue": "",
+                            "operator": {
+                                "type": "object",
+                                "operation": "exists",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -176,
+                -144
+            ],
+            "id": "50fd0c63-1dbc-4567-8e62-107f10d338d0",
+            "name": "Is Voice Message?"
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "fileId": "={{ $json.message.voice.file_id }}",
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                80,
+                -160
+            ],
+            "id": "22d2dbaf-2169-4121-b5a6-f2464f40f12a",
+            "name": "Get Voice File",
+            "webhookId": "54a09942-e05b-4f3f-bf19-b74c9e584d88",
+            "credentials": {
+                "telegramApi": {
+                    "id": "0nEO0bW3fZqANpZ8",
+                    "name": "shopkeeper-neurathon"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "audio",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash",
+                    "mode": "list"
+                },
+                "inputType": "binary",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1.1,
+            "position": [
+                416,
+                -160
+            ],
+            "id": "eca09716-d6fe-4712-9923-678ff79dc5fc",
+            "name": "Transcribe Voice",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "bTa5hmSZxhFkW9mS",
+                    "name": "Google Gemini(PaLM) Api account 3"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"user_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n  \"message\": \"{{ $json.content.parts[0].text }}\"\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                752,
+                -160
+            ],
+            "id": "3659daf8-72f7-4ff4-ad53-4aed71bf58b2",
+            "name": "Format Voice Message"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"chat_id\": \"{{ $json.message.chat.id }}\",\n  \"user_name\": \"{{ $json.message.from.first_name }}\",\n  \"message\": \"{{ $json.message.text }}\"\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                80,
+                48
+            ],
+            "id": "f4087ac5-c6cf-4c60-b61d-44cc1d2dd71a",
+            "name": "Format Text Message"
+        },
+        {
+            "parameters": {},
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3,
+            "position": [
+                960,
+                -48
+            ],
+            "id": "bee135d9-ac38-4dfc-9c3a-25395d2cb2b6",
+            "name": "Merge Messages"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.message }}",
+                "options": {
+                    "systemMessage": "You are **Bharat Biz-Agent**, a business assistant for a Kirana shop owner. You help manage inventory, sales, customers, and udhaar (credit).\n\n## SHOP INFO\n- Shop: Sharma Kirana Store\n- Shop ID: `c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4`\n\n## YOUR CAPABILITIES\n\n### 1. Inventory Management\n- Check stock: \"Rice ka stock?\"\n- Update stock: \"Rice me 10 bag add karo\"\n- Low stock report: \"Low stock items batao\"\n\n### 2. Sales & Orders\n- Today's sales: \"Aaj ka sales?\"\n- Pending orders: \"Pending orders dikhao\"\n- Complete order: \"Order #123 complete karo\"\n\n### 3. Customer Management\n- Search customer: \"Rahul ka account?\"\n- Add new customer: \"Naya customer Priya, phone 9876543210\"\n- Check udhaar: \"Rahul ka udhaar?\"\n\n### 4. Udhaar (Credit) Ledger\n- Add credit: \"Rahul ko 500 ka udhaar likho - Rice\"\n- Record payment: \"Rahul se 300 aaya\"\n- Pending list: \"Sabka pending udhaar batao\"\n\n### 5. Reports\n- Daily report: \"Aaj ki report\"\n- Sales summary: \"Is hafte ka sales\"\n\n## TOOLS AVAILABLE\n- **Read Products**: Get product list and stock\n- **Update Product Stock**: Change stock quantity\n- **Search Customer**: Find customer by name\n- **Create Customer**: Add new customer\n- **Add Udhaar**: Record credit given\n- **Record Payment**: Record payment received\n- **Get Pending Udhaar**: List all pending credits\n- **Read Orders**: Get order list\n- **Update Order**: Change order status\n- **Read Sales**: Get sales data\n\n## RESPONSE RULES\n1. **Language**: Match user's language (Hindi/Hinglish/English)\n2. **Brevity**: Short, clear messages\n3. **Emojis**: Use relevant emojis 📦 ✅ 💰 📊\n4. **Confirm actions**: Always confirm before making changes\n5. **Currency**: Use ₹ for amounts\n\n## EXAMPLE CONVERSATIONS\n\n**Stock Check:**\nUser: rice stock?\nYou: 📦 Rice Stock:\n• Rice 1kg: 100 bags ✅\n• Rice 5kg: 45 bags ✅\n\n**Add Udhaar:**\nUser: Amit ko 200 ka udhaar likho dal ke liye\nYou: 📝 Amit ka udhaar:\n• Dal - ₹200 likh diya\n• Total pending: ₹700\n\n**Sales Report:**\nUser: aaj ka sales?\nYou: 📊 Today's Sales:\n• Orders: 15\n• Total: ₹8,450\n• Cash: ₹5,200\n• UPI: ₹2,500\n• Credit: ₹750"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                1184,
+                -48
+            ],
+            "id": "1503fe7d-9295-43fe-90cd-fd4f70fb6531",
+            "name": "AI Owner Agent"
+        },
+        {
+            "parameters": {
+                "options": {
+                    "temperature": 0.5
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                1072,
+                160
+            ],
+            "id": "9865fd10-2790-43f4-b772-1d0fb076b48b",
+            "name": "Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "bTa5hmSZxhFkW9mS",
+                    "name": "Google Gemini(PaLM) Api account 3"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "owner-{{ $json.chat_id }}",
+                "contextWindowLength": 30
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                1184,
+                160
+            ],
+            "id": "0f434ffb-8569-4803-952f-7e199d97482c",
+            "name": "Chat Memory"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "products",
+                "filterType": "string",
+                "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&name=ilike.*{{ $fromAI('product_search', 'Product name to search, or leave empty for all', 'string', '') }}*"
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1312,
+                160
+            ],
+            "id": "7e808c22-ece0-4351-bc6c-bbc3077dfa2f",
+            "name": "Read Products",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "tableId": "products",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "stock",
+                            "fieldValue": "={{ $fromAI('new_stock', 'New stock quantity') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1424,
+                160
+            ],
+            "id": "bf22647a-af3b-4c53-bdb0-c5873971a220",
+            "name": "Update Product Stock",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "WuhcGgd4MUespsFB",
+                    "name": "neurathon"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "customers",
+                "limit": 10,
+                "filterType": "string",
+                "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&name=ilike.*{{ $fromAI('customer_search', 'Customer name to search') }}*"
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1552,
+                160
+            ],
+            "id": "746476c5-1a46-4bc7-b3b7-a71613a8ff5f",
+            "name": "Search Customer",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "tableId": "customers",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "shop_id",
+                            "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+                        },
+                        {
+                            "fieldId": "name",
+                            "fieldValue": "={{ $fromAI('customer_name', 'Full name of the customer') }}"
+                        },
+                        {
+                            "fieldId": "phone",
+                            "fieldValue": "={{ $fromAI('customer_phone', 'Customer phone number', 'string', '') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1664,
+                160
+            ],
+            "id": "42c469d9-cbe3-4710-b973-56b1d68c81a0",
+            "name": "Create Customer",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "tableId": "udhaar_ledger",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "shop_id",
+                            "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+                        },
+                        {
+                            "fieldId": "customer_id",
+                            "fieldValue": "={{ $fromAI('customer_id', 'Customer UUID from Search Customer result') }}"
+                        },
+                        {
+                            "fieldId": "type",
+                            "fieldValue": "credit"
+                        },
+                        {
+                            "fieldId": "amount",
+                            "fieldValue": "={{ $fromAI('amount', 'Credit amount in rupees') }}"
+                        },
+                        {
+                            "fieldId": "description",
+                            "fieldValue": "={{ $fromAI('description', 'Items purchased or notes') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1792,
+                160
+            ],
+            "id": "c8a974f8-76ea-4c02-82a9-94e1bc6a59ea",
+            "name": "Add Udhaar",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "tableId": "udhaar_ledger",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "shop_id",
+                            "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+                        },
+                        {
+                            "fieldId": "customer_id",
+                            "fieldValue": "={{ $fromAI('customer_id', 'Customer UUID') }}"
+                        },
+                        {
+                            "fieldId": "type",
+                            "fieldValue": "payment"
+                        },
+                        {
+                            "fieldId": "amount",
+                            "fieldValue": "={{ $fromAI('amount', 'Payment amount in rupees') }}"
+                        },
+                        {
+                            "fieldId": "description",
+                            "fieldValue": "={{ $fromAI('description', 'Payment method like Cash, UPI, etc.', 'string', 'Cash') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                1904,
+                160
+            ],
+            "id": "5c73377e-4aeb-4282-9648-10b295818da2",
+            "name": "Record Payment",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "customers",
+                "limit": 20,
+                "filterType": "string",
+                "filterString": "shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&total_udhaar=gt.0&order=total_udhaar.desc"
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                2032,
+                160
+            ],
+            "id": "7ec95894-2077-45c8-bc9c-a3324f92e50f",
+            "name": "Get Pending Udhaar",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "orders",
+                "limit": 10,
+                "filterType": "string",
+                "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&status=eq.{{ $fromAI('order_status', 'Order status to filter: pending, confirmed, completed', 'string', 'pending') }}&order=created_at.desc"
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                2144,
+                160
+            ],
+            "id": "5e4119af-71fa-400c-8d6a-89695dfd1c1e",
+            "name": "Read Orders",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "tableId": "orders",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "status",
+                            "fieldValue": "={{ $fromAI('new_status', 'New status: confirmed, completed, rejected') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                2272,
+                160
+            ],
+            "id": "b8224703-ef80-48e6-af96-04e2a51e645f",
+            "name": "Update Order",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "sales",
+                "limit": 7,
+                "filterType": "string",
+                "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&order=sale_date.desc"
+            },
+            "type": "n8n-nodes-base.supabaseTool",
+            "typeVersion": 1,
+            "position": [
+                2384,
+                160
+            ],
+            "id": "832b85b8-8d3e-467a-a0aa-3eb0e4fa8eae",
+            "name": "Read Sales",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Merge Messages').item.json.chat_id }}",
+                "text": "={{ $json.output }}",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1520,
+                -48
+            ],
+            "id": "821cb40d-f8e3-4459-804f-f38e5ea70f04",
+            "name": "Send Telegram Response",
+            "webhookId": "9547b12b-a325-46b5-80ba-37bddc64da15",
+            "credentials": {
+                "telegramApi": {
+                    "id": "0nEO0bW3fZqANpZ8",
+                    "name": "shopkeeper-neurathon"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Telegram Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Is Voice Message?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Voice Message?": {
+            "main": [
+                [
+                    {
+                        "node": "Get Voice File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Format Text Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Voice File": {
+            "main": [
+                [
+                    {
+                        "node": "Transcribe Voice",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Transcribe Voice": {
+            "main": [
+                [
+                    {
+                        "node": "Format Voice Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Voice Message": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Messages",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Text Message": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Messages",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge Messages": {
+            "main": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Owner Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Send Telegram Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Chat Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Products": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Product Stock": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Search Customer": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Customer": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Add Udhaar": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Record Payment": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Pending Udhaar": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Orders": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Order": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Sales": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Owner Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "instanceId": "76df690873be3dc4165dd7e925bc5a5a78ad2c9d99fb7cf6762aa1b6994a6cd8"
+    }
+}

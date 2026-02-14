@@ -1,0 +1,532 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "order-status-change",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -704,
+                240
+            ],
+            "id": "383febd9-aa05-4584-9846-9eea112e5e3f",
+            "name": "Order Status Webhook",
+            "webhookId": "order-status-webhook"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.body.record.status }}",
+                            "rightValue": "confirmed",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "leftValue": "={{ $json.body.old_record?.status || 'pending' }}",
+                            "rightValue": "confirmed",
+                            "operator": {
+                                "type": "string",
+                                "operation": "notEquals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -480,
+                240
+            ],
+            "id": "df813c88-c914-4a7d-b2b4-c411ed9ccea5",
+            "name": "Is Confirmed?"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.body.record.status }}",
+                            "rightValue": "rejected",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "leftValue": "={{ $json.body.old_record?.status || 'pending' }}",
+                            "rightValue": "rejected",
+                            "operator": {
+                                "type": "string",
+                                "operation": "notEquals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -480,
+                480
+            ],
+            "id": "c4951fdd-933d-4294-804c-916e0c69a566",
+            "name": "Is Rejected?"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "order_ongoing",
+                "filterType": "string",
+                "filterString": "={{ $json.body.record.id }}"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                -256,
+                128
+            ],
+            "id": "30648851-832a-46c4-8bd1-116020a8992b",
+            "name": "Get Order Ongoing (Confirm)",
+            "alwaysOutputData": false,
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"order\": {{ JSON.stringify($('Order Status Webhook').item.json.body.record) }},\n  \"chat_id\": \"{{ $json.customer_telegram_id }}\",\n  \"ongoing_id\": \"{{ $json.id }}\"\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -32,
+                128
+            ],
+            "id": "75b912ca-0ba0-4a7a-9b8f-0059113630da",
+            "name": "Extract Chat ID"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "order_items",
+                "returnAll": true,
+                "filterType": "string",
+                "filterString": "=order_id=eq.{{ $json.order.id }}"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                192,
+                128
+            ],
+            "id": "0617361e-6058-412d-8d5f-04025e205453",
+            "name": "Fetch Order Items",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://72.60.222.198:3001/api/invoice/generate",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"shop_name\": \"Sharma Kirana Store\",\n  \"shop_upi\": \"rahul@upi\",\n  \"shop_address\": \"Main Market, Sharma Nagar\",\n  \"shop_phone\": \"919395386870\",\n  \"customer_name\": \"{{ $('Extract Chat ID').item.json.order.customer_name }}\",\n  \"customer_phone\": \"{{ $('Extract Chat ID').item.json.order.customer_phone }}\",\n  \"invoice_number\": \"INV-{{ $('Extract Chat ID').item.json.order.id.slice(-8) }}\",\n  \"items\": {{ JSON.stringify($input.all().map(i => ({ name: i.json.product_name, qty: i.json.quantity, unit: i.json.unit, price: i.json.price }))) }},\n  \"subtotal\": {{ $('Extract Chat ID').item.json.order.total_amount }},\n  \"total_amount\": {{ $('Extract Chat ID').item.json.order.total_amount }},\n  \"is_paid\": true,\n  \"paid_date\": \"{{ new Date().toLocaleDateString('en-IN') }}\"\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                384,
+                128
+            ],
+            "id": "77c9f826-5294-4089-b839-edec93ab8196",
+            "name": "Generate PAID Invoice"
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "tableId": "order_ongoing",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "id",
+                            "condition": "eq",
+                            "keyValue": "={{ $('Extract Chat ID').item.json.ongoing_id }}"
+                        }
+                    ]
+                },
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "id",
+                            "fieldValue": "={{ $('Extract Chat ID').item.json.ongoing_id }}"
+                        },
+                        {
+                            "fieldId": "status",
+                            "fieldValue": "completed"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                624,
+                128
+            ],
+            "id": "3297341a-30e5-4bed-952c-b5af5feea185",
+            "name": "Mark Ongoing Completed",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Extract Chat ID').item.json.chat_id }}",
+                "text": "=✅ *Your Order is Confirmed & PAID!*\n\nHello {{ $('Extract Chat ID').item.json.order.customer_name }}! 👋\n\nGreat news! Your order has been confirmed by the shopkeeper.\n\n📦 *Order Details:*\n• Amount: ₹{{ $('Extract Chat ID').item.json.order.total_amount }}\n• Status: Confirmed ✅ | Paid ✅\n\n🛒 Your items will be ready soon!\n\nThank you for shopping with us! 🙏",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                848,
+                128
+            ],
+            "id": "c7d4d330-3e1d-4572-b133-02a7448805fb",
+            "name": "Send Confirmation to Customer",
+            "webhookId": "1d5a3649-14e6-4fbf-b89b-c6d6c2ea8eda",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jpCBEZogosHp357W",
+                    "name": "neratopn-customer"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "order_ongoing",
+                "limit": 1,
+                "filterType": "string",
+                "filterString": "=order_id=eq.{{ $json.body.record.id }}"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                -256,
+                480
+            ],
+            "id": "ec9e63f6-495f-481a-84a8-0e46959c75c7",
+            "name": "Get Order Ongoing (Reject)",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"order\": {{ JSON.stringify($('Order Status Webhook').item.json.body.record) }},\n  \"chat_id\": \"{{ $json.customer_telegram_id }}\",\n  \"ongoing_id\": \"{{ $json.id }}\"\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -32,
+                480
+            ],
+            "id": "7efd44ac-465d-44e1-a66b-23466db58fa3",
+            "name": "Extract Chat ID (Reject)"
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "tableId": "order_ongoing",
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "id",
+                            "fieldValue": "={{ $json.ongoing_id }}"
+                        },
+                        {
+                            "fieldId": "status",
+                            "fieldValue": "rejected"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                192,
+                480
+            ],
+            "id": "2612b98f-9b6b-4f82-a2b9-d340d3cb7cdd",
+            "name": "Mark Ongoing Rejected",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $json.chat_id }}",
+                "text": "❌ *Order Update*\n\nHello {{ $json.order.customer_name }},\n\nUnfortunately, your order could not be processed at this time.\n\n📞 Please contact the shop directly for more information.\n\nWe apologize for the inconvenience. 🙏",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                416,
+                480
+            ],
+            "id": "7b96da62-5154-4c16-b8e6-bb1f5aefe6d2",
+            "name": "Send Rejection to Customer",
+            "webhookId": "24ed811a-67de-4418-83fd-5e8123348408",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jpCBEZogosHp357W",
+                    "name": "neratopn-customer"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "sendDocument",
+                "chatId": "={{ $('Extract Chat ID').item.json.chat_id }}",
+                "binaryData": true,
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                864,
+                368
+            ],
+            "id": "912b6ddd-69e0-49a5-9b41-2935df7ae781",
+            "name": "Send a document",
+            "webhookId": "b9cadf74-befb-4597-bcc3-e0582aae6943",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jpCBEZogosHp357W",
+                    "name": "neratopn-customer"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.original_url }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.3,
+            "position": [
+                624,
+                368
+            ],
+            "id": "e214651f-1836-42eb-9b7a-543f09a00e86",
+            "name": "HTTP Request"
+        }
+    ],
+    "connections": {
+        "Order Status Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Is Confirmed?",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Is Rejected?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Confirmed?": {
+            "main": [
+                [
+                    {
+                        "node": "Get Order Ongoing (Confirm)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Rejected?": {
+            "main": [
+                [
+                    {
+                        "node": "Get Order Ongoing (Reject)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Order Ongoing (Confirm)": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Chat ID",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Chat ID": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Order Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Order Items": {
+            "main": [
+                [
+                    {
+                        "node": "Generate PAID Invoice",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate PAID Invoice": {
+            "main": [
+                [
+                    {
+                        "node": "Mark Ongoing Completed",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "HTTP Request",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Mark Ongoing Completed": {
+            "main": [
+                [
+                    {
+                        "node": "Send Confirmation to Customer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Confirmation to Customer": {
+            "main": [
+                []
+            ]
+        },
+        "Get Order Ongoing (Reject)": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Chat ID (Reject)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Chat ID (Reject)": {
+            "main": [
+                [
+                    {
+                        "node": "Mark Ongoing Rejected",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Mark Ongoing Rejected": {
+            "main": [
+                [
+                    {
+                        "node": "Send Rejection to Customer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send a document": {
+            "main": [
+                []
+            ]
+        },
+        "HTTP Request": {
+            "main": [
+                [
+                    {
+                        "node": "Send a document",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "76df690873be3dc4165dd7e925bc5a5a78ad2c9d99fb7cf6762aa1b6994a6cd8"
+    }
+}

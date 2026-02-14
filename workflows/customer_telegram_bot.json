@@ -1,0 +1,1221 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -352,
+        -64
+      ],
+      "id": "a3ae539b-db78-422d-a6cd-d610a99dcba8",
+      "name": "Telegram Trigger",
+      "webhookId": "bharat-biz-customer",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "is-photo",
+              "leftValue": "={{ $json.message.photo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -64
+      ],
+      "id": "8c7ba215-a9fa-4ea6-827c-e8fcdf11787a",
+      "name": "Is Photo?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "is-voice",
+              "leftValue": "={{ $json.message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        64,
+        224
+      ],
+      "id": "1cc8243a-9b22-423d-b5fd-fcfb716893ff",
+      "name": "Is Voice Message?"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        128
+      ],
+      "id": "eea083c8-532e-47f9-b2df-323c76a74232",
+      "name": "Get Voice File",
+      "webhookId": "ec65a9cb-cf88-4826-b8dc-5eaeddd6bb3f",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        128
+      ],
+      "id": "997d48d3-b038-4d17-a1a3-0f523b6fff03",
+      "name": "Transcribe Voice",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"user_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n  \"message\": \"{{ $json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        128
+      ],
+      "id": "6cda1011-784d-45e7-a053-dbc6776441fd",
+      "name": "Format Voice Message"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $json.message.chat.id }}\",\n  \"user_name\": \"{{ $json.message.from.first_name }}\",\n  \"message\": \"{{ $json.message.text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        384
+      ],
+      "id": "0995d278-4275-4d2a-b942-45e0f0337488",
+      "name": "Format Text Message"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo.pop().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        -160
+      ],
+      "id": "474efdd0-1b80-4216-83d4-4752e683da9a",
+      "name": "Get Photo File",
+      "webhookId": "dfbe3b35-1e55-4755-9b6e-a40311f70ebb",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://pxmkztbwmzkvvppagnhb.supabase.co/storage/v1/object/payment-screenshots/{{ $('Telegram Trigger').item.json.message.chat.id }}_{{ Date.now() }}.jpg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4bWt6dGJ3bXprdnZwcGFnbmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzM2NDIsImV4cCI6MjA4NTk0OTY0Mn0.NpaYzm_9JvWEVRt0ylpjQQVuhgrSNyFf00aalbo2mag"
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        -320
+      ],
+      "id": "upload-screenshot-to-storage",
+      "name": "Upload Screenshot"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Analyze this UPI payment screenshot. Extract the following details:\n1) Amount paid (number only)\n2) Transaction/UTR ID\n3) Sender name\n4) Receiver/Payee name\n5) Date & time of payment\n6) Payment app (GPay/PhonePe/Paytm etc)\n7) Payment status (Success/Failed/Pending)\n\nReturn as structured plain text.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        -160
+      ],
+      "id": "aaf807aa-797b-42ff-8169-9ec3cf8635b0",
+      "name": "Analyze Payment Screenshot",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"user_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n  \"message\": \"PAYMENT SCREENSHOT ANALYSIS:\\n{{ $json.content.parts[0].text }}\",\n  \"screenshot_url\": \"https://pxmkztbwmzkvvppagnhb.supabase.co/storage/v1/object/public/payment-screenshots/{{ $('Telegram Trigger').item.json.message.chat.id }}_{{ $('Upload Screenshot').item.json.Key ? $('Upload Screenshot').item.json.Key.split('/').pop() : Date.now() + '.jpg' }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        -160
+      ],
+      "id": "3559cffc-62b0-436b-b570-f608a87e8221",
+      "name": "Format Photo Data"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        944,
+        128
+      ],
+      "id": "021ebca3-37e3-41fd-b3d5-4dfdbeb27235",
+      "name": "Merge Messages"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "shop_profiles",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "select=id,shop_name,upi_id,address,owner_phone,qr_image_url"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        128
+      ],
+      "id": "c3b28e27-a819-4f0c-a59d-aa97602bf7be",
+      "name": "Fetch Store Info",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $('Merge Messages').item.json.chat_id }}\",\n  \"user_name\": \"{{ $('Merge Messages').item.json.user_name }}\",\n  \"message\": \"{{ $('Merge Messages').item.json.message }}\",\n  \"screenshot_url\": \"{{ $('Merge Messages').item.json.screenshot_url || '' }}\",\n  \"shop_id\": \"{{ $('Fetch Store Info').item.json.id }}\",\n  \"shop_name\": \"{{ $('Fetch Store Info').item.json.shop_name }}\",\n  \"shop_upi\": \"{{ $('Fetch Store Info').item.json.upi_id }}\",\n  \"shop_address\": \"{{ $('Fetch Store Info').item.json.address }}\",\n  \"shop_phone\": \"{{ $('Fetch Store Info').item.json.owner_phone }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1232,
+        128
+      ],
+      "id": "5efb5a0a-e593-49ed-9741-efc5ffb41ac5",
+      "name": "Combine Store + Message"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=You are a friendly Kirana store shopping assistant for **{{ $json.shop_name }}**.\nShop ID: {{ $json.shop_id }}\nUPI ID: {{ $json.shop_upi }}\n\n## TOOLS\n- **Check Customer**: Check if customer is registered by telegram_id (chat_id)\n- **Register Customer**: Save new customer (shop_id, telegram_id, name, phone, address)\n- **Read Products**: Search products by name\n- **Create Order Ongoing**: Save cart BEFORE payment (items_json, total_amount, customer_telegram_id, customer_name, status=payment_pending)\n- **Read Order Ongoing**: Get pending order for this chat_id (filter by customer_telegram_id and status)\n- **Update Order Ongoing**: Update status, payment_data, and screenshot_url after payment screenshot\n- **Create Order**: Create final order in orders table (ONLY after payment screenshot)\n- **Create Order Item**: Add items one by one to the order\n- **Read Orders**: Check existing orders by chat_id\n- **Send Invoice and Payment QR**: Pass these values: chat_id, customer_name, customer_phone, invoice_number (INV-<last 8 chars of order_ongoing id>), items (array of {name,qty,unit,price}), subtotal, total_amount\n- **Send Notification**: Alert shopkeeper (ONLY after payment is verified)\n- **Get Shop QR**: Get shop payment QR image URL\n\n## FLOW (FOLLOW THIS EXACTLY)\n1. **Registration**: Check if customer exists using chat_id. If not → ask name, phone, address → register.\n2. **Shopping**: Customer asks for items → search with Read Products → show with prices and emojis.\n3. **Confirm**: Customer says yes → show order summary → call **Create Order Ongoing** (items_json, total_amount, status=payment_pending) → call **Send Invoice and Payment QR** with chat_id, items, amounts.\n4. **Payment Screenshot**: When message starts with \"PAYMENT SCREENSHOT ANALYSIS:\":\n   a. Read the analysis → extract amount_paid, UTR, status, sender, payment_app\n   b. Read Order Ongoing for this chat_id (status=payment_pending) to get expected total_amount\n   c. Compare amount_paid with total_amount:\n      - **MATCH** (amount_paid >= total_amount & status=Success):\n        → Create Order (payment_status=paid) + Create Order Items\n        → Update Order Ongoing (status=payment_verified, order_id=new order id, payment_data={utr,amount_paid,sender,app,status}, screenshot_url={{ $json.screenshot_url }})\n        → Send Notification to shopkeeper\n        → Tell customer: \"✅ Payment verified! Shopkeeper ko notification bhej diya!\"\n      - **MISMATCH** (wrong amount or failed):\n        → Create Order (payment_status=pending, notes include ⚠️ warning about mismatch)\n        → Update Order Ongoing (status=payment_warning, warning_message, payment_data, screenshot_url={{ $json.screenshot_url }})\n        → Send Notification with warning\n        → Tell customer: \"⚠️ Payment mein issue hai (expected ₹X, received ₹Y). Shopkeeper check karega.\"\n\n## RULES\n- Match language: Hindi/Hinglish/English\n- Always use ₹ for amounts\n- Use emojis: 📦 ✅ 🛒 💰 🙏 ⏳ 📄 💳 ⚠️\n- Keep messages short\n- NEVER create order in orders table before payment screenshot\n- ALWAYS check registration first\n- ALWAYS show summary before sending invoice\n- When updating order_ongoing after payment, ALWAYS include screenshot_url from the message data\n\n## CURRENT USER\nTelegram Name: {{ $json.user_name }}\nChat ID: {{ $json.chat_id }}\nScreenshot URL (if photo): {{ $json.screenshot_url }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1392,
+        128
+      ],
+      "id": "61bb72e7-87d5-435d-957f-9c9caee663fb",
+      "name": "AI Customer Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        336
+      ],
+      "id": "cf137be7-426f-4c59-8c61-924703d789c1",
+      "name": "Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.chat_id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1392,
+        336
+      ],
+      "id": "49c9a0c9-8133-4117-9b7d-21490d1f246e",
+      "name": "Chat Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.{{ $('Combine Store + Message').item.json.shop_id }}&telegram_id=eq.{{ $fromAI('telegram_id', 'Telegram chat ID to check', 'string', '') }}"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        336
+      ],
+      "id": "f2b9197b-75c6-48d6-940c-cebd95d7a79b",
+      "name": "Check Customer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "customers",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "={{ $('Combine Store + Message').item.json.shop_id }}"
+            },
+            {
+              "fieldId": "telegram_id",
+              "fieldValue": "={{ $fromAI('telegram_id', 'Telegram chat ID') }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $fromAI('customer_name', 'Customer full name') }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $fromAI('phone', 'Customer phone number') }}"
+            },
+            {
+              "fieldId": "address",
+              "fieldValue": "={{ $fromAI('address', 'Customer delivery address') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        336
+      ],
+      "id": "32f8f0f0-c92b-4385-b26f-59832f4c3f4b",
+      "name": "Register Customer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.{{ $('Combine Store + Message').item.json.shop_id }}&name=ilike.*{{ $fromAI('product_search', 'Product name to search', 'string', '') }}*"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        336
+      ],
+      "id": "c9077c36-bd5e-4fa4-a880-ace60ec20051",
+      "name": "Read Products",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "order_ongoing",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "customer_telegram_id",
+              "fieldValue": "={{ $fromAI('customer_telegram_id', 'Telegram chat ID of customer') }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $fromAI('customer_name', 'Customer name') }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "payment_pending"
+            },
+            {
+              "fieldId": "items_json",
+              "fieldValue": "={{ $fromAI('items_json', 'JSON array of items like [{\"name\":\"Atta\",\"qty\":2,\"unit\":\"kg\",\"price\":45}]') }}"
+            },
+            {
+              "fieldId": "total_amount",
+              "fieldValue": "={{ $fromAI('total_amount', 'Total order amount') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        336
+      ],
+      "id": "032539e6-ee32-4f3e-b91a-6306baf3518a",
+      "name": "Create Order Ongoing",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "order_ongoing",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=customer_telegram_id=eq.{{ $fromAI('customer_telegram_id', 'Telegram chat ID') }}&status=eq.{{ $fromAI('ongoing_status', 'Status to filter: payment_pending, payment_verified, payment_warning', 'string', 'payment_pending') }}&order=created_at.desc"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1952,
+        336
+      ],
+      "id": "705c84ed-2f98-4fde-b9fe-3861e3e3fda1",
+      "name": "Read Order Ongoing",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "order_ongoing",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_telegram_id",
+              "condition": "eq",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `New status: payment_verified, payment_warning, confirmed, completed`, 'string') }}"
+            },
+            {
+              "fieldId": "order_id",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `Order UUID after creating order, or empty if not yet created`, 'string') }}"
+            },
+            {
+              "fieldId": "payment_data",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues2_Field_Value', `JSON payment info like {\"utr\":\"...\",\"amount_paid\":100,\"sender\":\"...\",\"app\":\"GPay\",\"status\":\"Success\"}`, 'string') }}"
+            },
+            {
+              "fieldId": "warning_message",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues3_Field_Value', `Warning message if payment mismatch, otherwise empty`, 'string') }}"
+            },
+            {
+              "fieldId": "screenshot_url",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues4_Field_Value', `URL of the payment screenshot image`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        336
+      ],
+      "id": "68b8c8e0-d0ae-4af8-88c5-ef6c9e644d5e",
+      "name": "Update Order Ongoing",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "={{ $('Combine Store + Message').item.json.shop_id }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $fromAI('customer_name', 'Customer name') }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $fromAI('customer_phone', 'Customer phone') }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldId": "payment_status",
+              "fieldValue": "={{ $fromAI('payment_status', 'paid if verified, pending if mismatch', 'string', 'paid') }}"
+            },
+            {
+              "fieldId": "total_amount",
+              "fieldValue": "={{ $fromAI('total_amount', 'Total order amount') }}"
+            },
+            {
+              "fieldId": "notes",
+              "fieldValue": "={{ $fromAI('order_notes', 'Order notes including telegram chat_id and any payment warnings') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        336
+      ],
+      "id": "f5701026-ef6e-454f-baa1-9f99468258c8",
+      "name": "Create Order",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "order_items",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "order_id",
+              "fieldValue": "={{ $fromAI('order_id', 'Order UUID from Create Order result') }}"
+            },
+            {
+              "fieldId": "product_name",
+              "fieldValue": "={{ $fromAI('product_name', 'Name of the product') }}"
+            },
+            {
+              "fieldId": "quantity",
+              "fieldValue": "={{ $fromAI('quantity', 'Quantity ordered') }}"
+            },
+            {
+              "fieldId": "unit",
+              "fieldValue": "={{ $fromAI('unit', 'Unit like kg, pcs, packet', 'string', 'pcs') }}"
+            },
+            {
+              "fieldId": "price",
+              "fieldValue": "={{ $fromAI('price', 'Price per unit') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        336
+      ],
+      "id": "6be64824-36a4-4070-8472-4a76b4f0d3e6",
+      "name": "Create Order Item",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "orders",
+        "limit": 5,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.{{ $('Combine Store + Message').item.json.shop_id }}&notes=ilike.*{{ $fromAI('chat_id', 'Telegram chat ID to search orders for') }}*&order=created_at.desc"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        336
+      ],
+      "id": "b92002b6-27f8-4510-b6bc-f5aba72be90c",
+      "name": "Read Orders",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "notifications",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "={{ $('Combine Store + Message').item.json.shop_id }}"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "new_order"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "=🛒 New Order from {{ $fromAI('customer_name', 'Customer name') }}"
+            },
+            {
+              "fieldId": "body",
+              "fieldValue": "={{ $fromAI('notification_body', 'Short description like: 2 items ₹250 | Payment: Verified ✅ or ⚠️ Amount Mismatch') }}"
+            },
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ JSON.stringify({ order_id: $fromAI('order_id', 'Order UUID'), customer_phone: $fromAI('customer_phone', 'Customer phone') }) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        336
+      ],
+      "id": "7f31e3a6-4eef-4a2a-9ee6-0fb6ea99cceb",
+      "name": "Send Notification",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Combine Store + Message').item.json.chat_id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1712,
+        128
+      ],
+      "id": "5f90fe88-54f8-476b-ae94-ae57e26c0b8c",
+      "name": "Send Telegram Response",
+      "webhookId": "203a1326-6fe4-45d4-bbd2-eadfa5dc2a89",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "cfXYMAWkagLDD9s6",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/cfXYMAWkagLDD9s6",
+          "cachedResultName": "Send Invoice and QR to Customer_final"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('chat_id', `Telegram chat ID`, 'string') }}",
+            "customer_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', `Customer name`, 'string') }}",
+            "customer_phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_phone', `Customer phone number`, 'string') }}",
+            "invoice_number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('invoice_number', `Last 8 characters of order_ongoing UUID`, 'string') }}",
+            "items": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('items', `Array of items like [{name,qty,unit,price}]`, 'json') }}",
+            "subtotal": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('subtotal', `Subtotal amount as number`, 'number') }}",
+            "total_amount": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('total_amount', `Total amount as number`, 'number') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array"
+            },
+            {
+              "id": "subtotal",
+              "displayName": "subtotal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "total_amount",
+              "displayName": "total_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2624,
+        336
+      ],
+      "id": "b2e3c15e-d05c-45c7-81af-b3ae419de1c4",
+      "name": "Send Invoice and Payment QR"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "shop_profiles",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "id=eq.{{ $('Combine Store + Message').item.json.shop_id }}&select=qr_image_url"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2736,
+        336
+      ],
+      "id": "baedd2e2-69e9-43bf-8609-535d87060915",
+      "name": "Get Shop QR",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is Photo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Photo?": {
+      "main": [
+        [
+          {
+            "node": "Get Photo File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Voice Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Voice Message?": {
+      "main": [
+        [
+          {
+            "node": "Get Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voice File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Voice": {
+      "main": [
+        [
+          {
+            "node": "Format Voice Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Voice Message": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Format Text Message": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Get Photo File": {
+      "main": [
+        [
+          {
+            "node": "Upload Screenshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analyze Payment Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Payment Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Format Photo Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Photo Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Messages": {
+      "main": [
+        [
+          {
+            "node": "Fetch Store Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Store Info": {
+      "main": [
+        [
+          {
+            "node": "Combine Store + Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Store + Message": {
+      "main": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Customer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Customer": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register Customer": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Products": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Ongoing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Order Ongoing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Order Ongoing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Item": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Notification": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Invoice and Payment QR": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shop QR": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "76df690873be3dc4165dd7e925bc5a5a78ad2c9d99fb7cf6762aa1b6994a6cd8"
+  }
+}

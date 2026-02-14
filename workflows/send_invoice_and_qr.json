@@ -1,0 +1,216 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "inputSource": "jsonExample",
+                "jsonExample": "{\n  \"chat_id\": \"123456789\",\n  \"customer_name\": \"Rahul Kumar\",\n  \"customer_phone\": \"9876543210\",\n  \"invoice_number\": \"INV-12345678\",\n  \"items\": [{\"name\":\"Atta\",\"qty\":2,\"unit\":\"kg\",\"price\":45}],\n  \"subtotal\": 90,\n  \"total_amount\": 90\n}"
+            },
+            "type": "n8n-nodes-base.executeWorkflowTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                -128,
+                400
+            ],
+            "id": "3bf4492c-b2be-476f-801a-ec3d57a7f205",
+            "name": "When Called by Another Workflow"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://72.60.222.198:3001/api/invoice/generate",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  shop_name: 'Sharma Kirana Store',\n  shop_upi: 'rahul@upi',\n  shop_address: 'Main Market, Sharma Nagar',\n  shop_phone: '919395386870',\n  customer_name: $('When Called by Another Workflow').item.json.customer_name,\n  customer_phone: $('When Called by Another Workflow').item.json.customer_phone,\n  invoice_number: $('When Called by Another Workflow').item.json.invoice_number,\n  items: $('When Called by Another Workflow').item.json.items,\n  subtotal: $('When Called by Another Workflow').item.json.subtotal,\n  total_amount: $('When Called by Another Workflow').item.json.total_amount,\n  is_paid: false\n} }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "json"
+                        }
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                96,
+                304
+            ],
+            "id": "1479fdf5-98f6-4c59-8053-4a151cca6618",
+            "name": "Generate Invoice API"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "shop_profiles",
+                "limit": 1,
+                "filterType": "string",
+                "filterString": "id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&select=qr_image_url"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                112,
+                592
+            ],
+            "id": "1e705fe0-70ba-4d0c-b287-475f3a67ac26",
+            "name": "Get Shop QR",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "bschPiNCSp4KuAKo",
+                    "name": "neurathon-fianl"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.original_url }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                272,
+                304
+            ],
+            "id": "f4c6fcc5-b82e-45df-92e1-e3ec501e6012",
+            "name": "Download Invoice PDF"
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.qr_image_url }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                288,
+                592
+            ],
+            "id": "de26938f-e637-4671-a3c5-952d2531b4c5",
+            "name": "Download QR Image"
+        },
+        {
+            "parameters": {
+                "operation": "sendDocument",
+                "chatId": "={{ $('When Called by Another Workflow').item.json.chat_id }}",
+                "binaryData": true,
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                448,
+                304
+            ],
+            "id": "3659516f-f941-4441-9149-c735d7cc867a",
+            "name": "Send PDF Document",
+            "webhookId": "86bf9586-fc31-4e6a-a69f-336e3b2a9d58",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jpCBEZogosHp357W",
+                    "name": "neratopn-customer"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "sendPhoto",
+                "chatId": "={{ $('When Called by Another Workflow').item.json.chat_id }}",
+                "binaryData": true,
+                "additionalFields": {}
+            },
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                464,
+                592
+            ],
+            "id": "3abbe472-4cfe-4d73-b4c9-04b153b12f8d",
+            "name": "Send QR Code Image",
+            "webhookId": "26311af6-d157-4d89-acf6-5fb7f12fbc85",
+            "credentials": {
+                "telegramApi": {
+                    "id": "jpCBEZogosHp357W",
+                    "name": "neratopn-customer"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "When Called by Another Workflow": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Invoice API",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Get Shop QR",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Invoice API": {
+            "main": [
+                [
+                    {
+                        "node": "Download Invoice PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Shop QR": {
+            "main": [
+                [
+                    {
+                        "node": "Download QR Image",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Download Invoice PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Send PDF Document",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Download QR Image": {
+            "main": [
+                [
+                    {
+                        "node": "Send QR Code Image",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send PDF Document": {
+            "main": [
+                []
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "instanceId": "76df690873be3dc4165dd7e925bc5a5a78ad2c9d99fb7cf6762aa1b6994a6cd8"
+    }
+}

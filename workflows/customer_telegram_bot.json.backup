@@ -1,0 +1,927 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -336,
+        -144
+      ],
+      "id": "98ac3d56-de13-42fa-9ec6-3bdff3f70022",
+      "name": "Telegram Trigger",
+      "webhookId": "bharat-biz-customer",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "is-photo",
+              "leftValue": "={{ $json.message.photo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        -144
+      ],
+      "id": "8c7317c3-0bfa-4bf1-aff7-bb94a1cedef0",
+      "name": "Is Photo?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "is-voice",
+              "leftValue": "={{ $json.message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        112,
+        144
+      ],
+      "id": "24b45bcb-fbf3-43b5-a8b4-9a54820a1334",
+      "name": "Is Voice Message?"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        48
+      ],
+      "id": "7df75a09-6aee-49a4-9f6e-19dc37ff16d7",
+      "name": "Get Voice File",
+      "webhookId": "ec65a9cb-cf88-4826-b8dc-5eaeddd6bb3f",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        48
+      ],
+      "id": "1d8eb5a0-4c4e-4b8a-ae28-4c23c59c7fce",
+      "name": "Transcribe Voice",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"user_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n  \"message\": \"{{ $json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        48
+      ],
+      "id": "336dba27-43da-4033-8f88-3b467e7c7836",
+      "name": "Format Voice Message"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $json.message.chat.id }}\",\n  \"user_name\": \"{{ $json.message.from.first_name }}\",\n  \"message\": \"{{ $json.message.text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        304
+      ],
+      "id": "9362bb0b-7060-4042-ba6d-e0e286a25d6d",
+      "name": "Format Text Message"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo.pop().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        -240
+      ],
+      "id": "4e093fd2-6ff9-49bc-b03d-14dd2223fbd9",
+      "name": "Get Photo File",
+      "webhookId": "dfbe3b35-1e55-4755-9b6e-a40311f70ebb",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Analyze this UPI payment screenshot. Extract the following details:\n1) Amount paid (number only)\n2) Transaction/UTR ID\n3) Sender name\n4) Receiver/Payee name\n5) Date & time of payment\n6) Payment app (GPay/PhonePe/Paytm etc)\n7) Payment status (Success/Failed/Pending)\n\nReturn as structured plain text.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        -240
+      ],
+      "id": "7b1ffc10-792e-41cb-9e81-256ca7cdc252",
+      "name": "Analyze Payment Screenshot",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"user_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n  \"message\": \"PAYMENT SCREENSHOT ANALYSIS:\\n{{ $json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        -240
+      ],
+      "id": "3865faef-ec3c-4241-9db3-0090e8b320a9",
+      "name": "Format Photo Data"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        992,
+        48
+      ],
+      "id": "350a9b5a-d4ff-4d42-8cec-cff9b453907c",
+      "name": "Merge Messages"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "You are **Bharat Biz-Agent**, a friendly AI shopping assistant for an Indian Kirana/General Store. You help customers place orders via Telegram.\n\n## SHOP INFO\n- Shop: Sharma Kirana Store\n- Shop ID: `c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4`\n- Hours: 8 AM - 10 PM\n- UPI ID: rahul@upi\n\n## CRITICAL: CUSTOMER REGISTRATION FLOW\n**FIRST THING TO DO**: At the start of EVERY conversation, you MUST check if customer is registered using 'Check Customer' tool with their Telegram chat_id.\n\n### If Customer NOT Found (empty result):\n1. Greet: \"🙏 Namaste! Sharma Kirana Store mein aapka swagat hai!\"\n2. Ask: \"Pehli baar aa rahe ho! Kripya apna naam, phone number, aur delivery address batao.\"\n3. Wait for response\n4. Use 'Register Customer' tool to save details\n5. Confirm: \"✅ Aapka account ban gaya! Ab aap order kar sakte ho.\"\n\n### If Customer Found:\n1. Greet by name: \"🙏 Namaste {customer_name}! Kaise madad kar sakta hoon?\"\n\n## ORDER FLOW (VERY IMPORTANT - FOLLOW EXACTLY IN ORDER)\n\n### Step 1: Product Selection\n- Customer asks for products\n- Search using Read Products tool\n- Show available items with prices\n- Let customer choose\n\n### Step 2: Show Order Summary (MUST DO)\nOnce customer selects products, show summary:\n\n🛒 **Order Summary**\n━━━━━━━━━━━━━━━━━━\n📦 Items:\n• [Product] × [Qty] = ₹[Price]\n━━━━━━━━━━━━━━━━━━\n💰 **Total: ₹[Amount]**\n📍 Delivery: [Address]\n📱 Phone: [Phone]\n\n✅ Order confirm karein? (Haan/Na)\n\n### Step 3: Wait for Confirmation\n- DO NOT create order until customer says \"Haan\", \"Yes\", \"Confirm\"\n- If \"Na\" - ask what to change\n\n### Step 4: Create Order (ONLY after confirmation)\n1. Create Order using Create Order tool\n2. Create Order Items (one by one for each item)\n\n### Step 5: IMMEDIATELY Generate Invoice (DO THIS RIGHT AFTER ORDER ITEMS)\n**CRITICAL: Do this BEFORE sending notification!**\n1. Call 'Generate Invoice' tool with: customer_name, customer_phone, invoice_number (last 8 chars of order id), items array [{name,qty,unit,price}], subtotal, total_amount\n2. Send the invoice PDF link from the response to the customer\n3. Call 'Get Shop QR' tool to get the QR image URL\n4. Send the customer this message with QR:\n\n📄 **Invoice Ready!**\nDownload: [pdf_url from Generate Invoice response]\n\n💳 **Payment kaise karein:**\n1. QR code scan karein ya UPI ID use karein: `rahul@upi`\n2. ₹[amount] pay karein\n3. Payment screenshot yahan bhejein 📸\n\nQR: [qr_image_url from Get Shop QR response]\n\n### Step 6: Send Notification to Shopkeeper (ONLY AFTER invoice is sent)\nNow send notification to shopkeeper using Send Notification tool.\n\n### Step 7: Final Message\nAfter everything above, send:\n\n✅ **Order Request Sent!**\n━━━━━━━━━━━━━━━━━━\n🆔 Order ID: #[last 4 chars]\n📦 [count] items | ₹[amount]\n\n⏳ **Aapka order request dukaan ko bhej diya gaya hai!**\nAapko jaldi confirmation milega! 🙏\n\n### Payment Screenshot Processing\nWhen message starts with \"PAYMENT SCREENSHOT ANALYSIS:\":\n1. Read the analysis - extract amount, transaction ID, status\n2. Match against pending order (use Read Orders tool)\n3. If payment successful and amount matches:\n   - Notify shopkeeper with payment details\n   - Tell customer: \"✅ Payment received! Shopkeeper ko verify karne ke liye bhej diya hai.\"\n4. If failed/mismatch: tell customer to retry\n\n## TOOLS AVAILABLE\n- **Check Customer**: Check if customer exists by telegram_id\n- **Register Customer**: Save new customer\n- **Read Products**: Search products\n- **Create Order**: Create order\n- **Create Order Item**: Add items to order\n- **Read Orders**: Check order status\n- **Generate Invoice**: Generate PDF invoice (call BEFORE notification!)\n- **Get Shop QR**: Get shop's UPI QR code image URL\n- **Send Notification**: Alert shopkeeper (call AFTER invoice!)\n\n## RESPONSE RULES\n1. Match language (Hindi/Hinglish/English)\n2. Always use ₹\n3. Use emojis 📦 ✅ 🛒 💰 🙏 ⏳ 📄 💳\n4. Keep messages short\n5. NEVER order without registration check\n6. ALWAYS show summary before creating order\n7. ALWAYS generate invoice BEFORE sending notification\n8. ALWAYS send QR image after invoice\n\n## CURRENT USER\nTelegram Name: {{ $json.user_name }}\nChat ID: {{ $json.chat_id }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1216,
+        48
+      ],
+      "id": "3416a433-e120-4205-ba4e-c281ba057644",
+      "name": "AI Customer Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        256
+      ],
+      "id": "0a3f6856-d14e-4049-bb12-fa3a0773d541",
+      "name": "Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bTa5hmSZxhFkW9mS",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.chat_id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1216,
+        256
+      ],
+      "id": "e5594e1b-bd1b-4467-b15f-6ad01004d522",
+      "name": "Chat Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&telegram_id=eq.{{ $fromAI('telegram_id', 'Telegram chat ID to check', 'string', '') }}"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        256
+      ],
+      "id": "662d04de-df0d-479f-a1ef-43544c3ab678",
+      "name": "Check Customer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "customers",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+            },
+            {
+              "fieldId": "telegram_id",
+              "fieldValue": "={{ $fromAI('telegram_id', 'Telegram chat ID') }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $fromAI('customer_name', 'Customer full name') }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $fromAI('phone', 'Customer phone number') }}"
+            },
+            {
+              "fieldId": "address",
+              "fieldValue": "={{ $fromAI('address', 'Customer delivery address') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        256
+      ],
+      "id": "f9753197-30a0-4c85-a7e7-51acc7c81029",
+      "name": "Register Customer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&name=ilike.*{{ $fromAI('product_search', 'Product name to search', 'string', '') }}*"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        256
+      ],
+      "id": "4c45e87b-42cf-4234-abe0-c6e63393cf42",
+      "name": "Read Products",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $fromAI('customer_name', 'Customer name from Check Customer result') }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $fromAI('customer_phone', 'Customer phone from Check Customer result') }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldId": "payment_status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldId": "total_amount",
+              "fieldValue": "={{ $fromAI('total_amount', 'Total order amount in rupees') }}"
+            },
+            {
+              "fieldId": "notes",
+              "fieldValue": "=Telegram Order from chat {{ $('Merge Messages').item.json.chat_id }} | Address: {{ $fromAI('delivery_address', 'Customer address from Check Customer result') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        256
+      ],
+      "id": "27d4177a-fb85-40c0-a8e3-0b632f8de516",
+      "name": "Create Order",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "order_items",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "order_id",
+              "fieldValue": "={{ $fromAI('order_id', 'Order UUID from Create Order result') }}"
+            },
+            {
+              "fieldId": "product_name",
+              "fieldValue": "={{ $fromAI('product_name', 'Name of the product') }}"
+            },
+            {
+              "fieldId": "quantity",
+              "fieldValue": "={{ $fromAI('quantity', 'Quantity ordered') }}"
+            },
+            {
+              "fieldId": "unit",
+              "fieldValue": "={{ $fromAI('unit', 'Unit like kg, pcs, packet', 'string', 'pcs') }}"
+            },
+            {
+              "fieldId": "price",
+              "fieldValue": "={{ $fromAI('price', 'Price per unit') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        256
+      ],
+      "id": "d1d8bed7-87a1-4e96-8704-533317e77945",
+      "name": "Create Order Item",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "orders",
+        "limit": 5,
+        "filterType": "string",
+        "filterString": "=shop_id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&notes=ilike.*{{ $fromAI('chat_id', 'Telegram chat ID to search orders for') }}*&order=created_at.desc"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1888,
+        256
+      ],
+      "id": "09a01cce-7d81-40b8-8f4e-724395d4f67f",
+      "name": "Read Orders",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "notifications",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "shop_id",
+              "fieldValue": "c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "new_order"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "=🛒 New Order from {{ $fromAI('customer_name', 'Customer name') }}"
+            },
+            {
+              "fieldId": "body",
+              "fieldValue": "={{ $fromAI('notification_body', 'Short description of order like: 2 items, ₹250 total') }}"
+            },
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ JSON.stringify({ order_id: $fromAI('order_id', 'Order UUID from Create Order result'), customer_phone: $fromAI('customer_phone', 'Customer phone') }) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        256
+      ],
+      "id": "ecfb1019-f1e2-408a-af26-d881d4b4e59c",
+      "name": "Send Notification",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bschPiNCSp4KuAKo",
+          "name": "neurathon-fianl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Merge Messages').item.json.chat_id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        48
+      ],
+      "id": "5e2c476c-d77a-49f1-bee5-3b8867ab3f33",
+      "name": "Send Telegram Response",
+      "webhookId": "203a1326-6fe4-45d4-bbd2-eadfa5dc2a89",
+      "credentials": {
+        "telegramApi": {
+          "id": "jpCBEZogosHp357W",
+          "name": "neratopn-customer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "generate_invoice",
+        "description": "Generate a PDF invoice for an order. Call this IMMEDIATELY after creating order items and BEFORE sending notification. Provide: customer_name, customer_phone, invoice_number (last 8 chars of order UUID), items_json (JSON array like [{\"name\":\"Atta\",\"qty\":2,\"unit\":\"kg\",\"price\":45}]), subtotal, total_amount. Returns the PDF invoice URL.",
+        "jsCode": "try {\n  // Get parameters from AI\n  const customer_name = $fromAI('customer_name', 'Customer name');\n  const customer_phone = $fromAI('customer_phone', 'Customer phone number');\n  const invoice_number_suffix = $fromAI('invoice_number', 'Last 8 characters of the order UUID');\n  const items_json = $fromAI('items_json', 'JSON array of items like [{\"name\":\"Atta\",\"qty\":2,\"unit\":\"kg\",\"price\":45}]');\n  const subtotal = $fromAI('subtotal', 'Subtotal amount as number');\n  const total_amount = $fromAI('total_amount', 'Total amount as number');\n  \n  // Debug logging\n  console.log('Invoice params:', { customer_name, customer_phone, invoice_number_suffix, items_json, subtotal, total_amount });\n  \n  // Validation\n  if (!customer_name || !customer_phone || !invoice_number_suffix || !items_json || !subtotal || !total_amount) {\n    return 'ERROR: Missing required parameters. Provided: customer_name=' + customer_name + ', customer_phone=' + customer_phone + ', invoice_number=' + invoice_number_suffix + ', items_json=' + (items_json ? 'provided' : 'missing') + ', subtotal=' + subtotal + ', total_amount=' + total_amount;\n  }\n  \n  // Parse items if string\n  const items = typeof items_json === 'string' ? JSON.parse(items_json) : items_json;\n  \n  // Build request body\n  const body = {\n    shop_name: 'Sharma Kirana Store',\n    shop_upi: 'rahul@upi',\
+    shop_address: 'Main Market, Sharma Nagar',\
+    shop_phone: '919395386870',\
+    customer_name: customer_name,\
+    customer_phone: customer_phone,\
+    invoice_number: 'INV-' + invoice_number_suffix,\
+    items: items,\
+    subtotal: Number(subtotal),\
+    total_amount: Number(total_amount),\
+    is_paid: false\
+      };\
+  \
+  console.log('Sending invoice request:', JSON.stringify(body));\
+  \
+  // Make HTTP request\
+  const response = await fetch('http: //72.60.222.198:3001/api/invoice/generate', {\
+    method: 'POST',\
+    headers: { 'Content-Type': 'application/json'
+      },\
+    body: JSON.stringify(body)\
+    });\
+  \
+  if (!response.ok) {\
+    const errorText = await response.text();\
+    return 'ERROR: HTTP ' + response.status + ' - ' + errorText;\
+    }\
+  \
+  const result = await response.json();\
+  console.log('Invoice API response:', result);\
+  \
+  if (result.success && result.pdf_url) {\
+    return 'Invoice generated successfully! Download link: ' + result.pdf_url;\
+    } else {\
+    return 'ERROR: Invoice generation failed - ' + JSON.stringify(result);\
+    }\
+  } catch (error) {\
+  return 'ERROR: ' + error.message + ' | Stack: ' + error.stack;\
+  }"
+},
+"type": "@n8n/n8n-nodes-langchain.toolCode",
+"typeVersion": 1,
+"position": [
+  2112,
+  256
+],
+"id": "e466bdd1-5065-413e-8c43-4efc6eb8ed46",
+"name": "Generate Invoice"
+},
+{
+"parameters": {
+  "operation": "getAll",
+  "tableId": "shop_profiles",
+  "limit": 1,
+  "filterType": "string",
+  "filterString": "id=eq.c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4&select=qr_image_url"
+},
+"type": "n8n-nodes-base.supabaseTool",
+"typeVersion": 1,
+"position": [
+  2224,
+  256
+],
+"id": "799fe397-e3a3-44c6-879e-0316bb357073",
+"name": "Get Shop QR",
+"credentials": {
+  "supabaseApi": {
+    "id": "bschPiNCSp4KuAKo",
+    "name": "neurathon-fianl"
+  }
+}
+}
+],
+"connections": {
+"Telegram Trigger": {
+"main": [
+  [
+    {
+      "node": "Is Photo?",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Is Photo?": {
+"main": [
+  [
+    {
+      "node": "Get Photo File",
+      "type": "main",
+      "index": 0
+    }
+  ],
+  [
+    {
+      "node": "Is Voice Message?",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Is Voice Message?": {
+"main": [
+  [
+    {
+      "node": "Get Voice File",
+      "type": "main",
+      "index": 0
+    }
+  ],
+  [
+    {
+      "node": "Format Text Message",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Get Voice File": {
+"main": [
+  [
+    {
+      "node": "Transcribe Voice",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Transcribe Voice": {
+"main": [
+  [
+    {
+      "node": "Format Voice Message",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Format Voice Message": {
+"main": [
+  [
+    {
+      "node": "Merge Messages",
+      "type": "main",
+      "index": 1
+    }
+  ]
+]
+},
+"Format Text Message": {
+"main": [
+  [
+    {
+      "node": "Merge Messages",
+      "type": "main",
+      "index": 2
+    }
+  ]
+]
+},
+"Get Photo File": {
+"main": [
+  [
+    {
+      "node": "Analyze Payment Screenshot",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Analyze Payment Screenshot": {
+"main": [
+  [
+    {
+      "node": "Format Photo Data",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Format Photo Data": {
+"main": [
+  [
+    {
+      "node": "Merge Messages",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Merge Messages": {
+"main": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"AI Customer Agent": {
+"main": [
+  [
+    {
+      "node": "Send Telegram Response",
+      "type": "main",
+      "index": 0
+    }
+  ]
+]
+},
+"Gemini Chat Model": {
+"ai_languageModel": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_languageModel",
+      "index": 0
+    }
+  ]
+]
+},
+"Chat Memory": {
+"ai_memory": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_memory",
+      "index": 0
+    }
+  ]
+]
+},
+"Check Customer": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Register Customer": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Read Products": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Create Order": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Create Order Item": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Read Orders": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Send Notification": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Generate Invoice": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+},
+"Get Shop QR": {
+"ai_tool": [
+  [
+    {
+      "node": "AI Customer Agent",
+      "type": "ai_tool",
+      "index": 0
+    }
+  ]
+]
+}
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": true,
+"instanceId": "76df690873be3dc4165dd7e925bc5a5a78ad2c9d99fb7cf6762aa1b6994a6cd8"
+}
+}

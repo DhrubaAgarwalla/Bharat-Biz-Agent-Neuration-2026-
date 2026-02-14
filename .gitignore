@@ -1,0 +1,40 @@
+# ============================================
+# Bharat Biz-Agent - Root Gitignore
+# ============================================
+
+# Dependencies
+node_modules/
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PDF Invoice API - generated files
+pdf-invoice-api/public/invoices/
+
+# Expo
+app/.expo/
+app/dist/
+app/web-build/
+
+# Android prebuild
+app/android/
+
+# Debug logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*

@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Generated invoices
+public/invoices/
+
+# Logs
+*.log
+npm-debug.*
