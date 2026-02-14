@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/images/hero_banner.png" alt="Bharat Biz-Agent Banner" width="800"/>
+
 # 🇮🇳 Bharat Biz-Agent
 
 ### *AI-Powered Commerce Platform for Indian Kirana Stores*
@@ -153,6 +155,22 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 - **Custom header** with dynamic tab title + notification 🔔 with live unread badge
 - Tabs: **Dashboard** → **Orders** → **Inventory** → **Reports** → **Profile**
 
+### 📸 App Screenshots
+
+<p align="center">
+  <img src="docs/images/app_dashboard.jpeg" alt="Dashboard" width="180"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/app_inventory.jpeg" alt="Inventory" width="180"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/app_reports.jpeg" alt="Reports" width="180"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/app_profile.jpeg" alt="Profile" width="180"/>
+</p>
+
+<p align="center">
+  <em>Dashboard &bull; Inventory &bull; Reports &bull; Profile</em>
+</p>
+
 <details>
 <summary><b>🏠 Dashboard Screen</b></summary>
 
@@ -287,6 +305,8 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 
 > 🛒 AI-powered shopping assistant for customers
 
+<img src="docs/images/workflow_customer_bot.png" alt="Customer Bot Workflow" width="100%"/>
+
 ```
 📩 Telegram Message
     ├── 📸 Photo? → Upload to Supabase → Gemini OCR → Payment Analysis
@@ -324,11 +344,35 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 - ✅ Amount match → `payment_verified` | ⚠️ Mismatch → `payment_warning`
 - 🧠 Conversation memory: 20 messages/session | Temperature: 0.7
 
+### 📱 Customer Bot in Action
+
+<p align="center">
+  <img src="docs/images/telegram_customer_order.jpeg" alt="Customer Ordering" width="250"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/telegram_invoice_qr.jpeg" alt="Invoice & QR" width="250"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/telegram_payment_verified.jpeg" alt="Payment Verified" width="250"/>
+</p>
+
+<p align="center">
+  <em>Browse & Order &bull; Invoice + UPI QR &bull; Payment OCR Verification</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/telegram_voice_order.jpeg" alt="Voice Order in Hindi" width="300"/>
+</p>
+
+<p align="center">
+  <em>🎙️ Voice ordering in Hindi — send a voice note, get instant results</em>
+</p>
+
 ---
 
 ### 2️⃣ Shopkeeper Voice Bot
 
 > 🎙️ Voice-first store management for the owner
+
+<img src="docs/images/workflow_shopkeeper_bot.png" alt="Shopkeeper Bot Workflow" width="100%"/>
 
 ```
 📩 Telegram Message
@@ -368,6 +412,8 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 
 > 🔔 Notifies customers when orders are confirmed/rejected from the app
 
+<img src="docs/images/workflow_order_confirmation.png" alt="Order Confirmation Workflow" width="100%"/>
+
 ```
 📡 Webhook (Order Status Change)
     ├── ✅ Confirmed → Get Details → Generate PAID Invoice → Send to Customer
@@ -380,6 +426,8 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 
 > 📄 Generates and sends invoice PDF + UPI QR code
 
+<img src="docs/images/workflow_invoice_qr.png" alt="Invoice & QR Workflow" width="100%"/>
+
 ```
 🔄 Called by Other Workflows
     ├── 📄 Generate Invoice (PDF API) → Download → Send via Telegram
@@ -390,6 +438,14 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 
 <a name="pdf-invoice-api"></a>
 ## 📄 PDF Invoice API
+
+<p align="center">
+  <img src="docs/images/invoice_pdf_preview.jpeg" alt="Invoice PDF Preview" width="350"/>
+</p>
+
+<p align="center">
+  <em>Bilingual PDF Invoice (English + Hindi)</em>
+</p>
 
 | Component | Details |
 |:---|:---|
@@ -416,6 +472,14 @@ The mobile app is built with **React Native (Expo)** and provides a complete sto
 
 <a name="supabase-edge-functions"></a>
 ## 🔔 Supabase Edge Functions
+
+<p align="center">
+  <img src="docs/images/app_push_notification.jpeg" alt="Push Notification" width="300"/>
+</p>
+
+<p align="center">
+  <em>Real-time push notification in Hindi</em>
+</p>
 
 ### `send-push-notification`
 
