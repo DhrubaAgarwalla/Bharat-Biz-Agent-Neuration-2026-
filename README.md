@@ -1,602 +1,612 @@
+<div align="center">
+
 # 🇮🇳 Bharat Biz-Agent
 
-> **AI-Powered Commerce System for Indian Kirana Stores**
->
-> A comprehensive, AI-driven platform that empowers Kirana (neighbourhood grocery) store owners to manage sales, inventory, orders, customer credit (udhaar), and invoicing — entirely through a mobile app and Telegram bots with **voice command support in Hindi/Hinglish/English**.
+### *AI-Powered Commerce Platform for Indian Kirana Stores*
+
+[![Neurathon 2026](https://img.shields.io/badge/🏆_Neurathon-2026-FF6B35?style=for-the-badge)](https://neurathon.tech)
+[![React Native](https://img.shields.io/badge/React_Native-Expo-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://expo.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Gemini AI](https://img.shields.io/badge/Google_Gemini-2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![n8n](https://img.shields.io/badge/n8n-Workflows-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io)
+[![Telegram](https://img.shields.io/badge/Telegram-Bots-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://telegram.org)
+
+---
+
+> **A comprehensive, AI-driven platform** that empowers Kirana (neighbourhood grocery) store owners to manage sales, inventory, orders, customer credit (udhaar), and invoicing — through a **mobile app** and **Telegram bots** with **voice command support in Hindi/Hinglish/English**.
+
+[📱 Mobile App](#mobile-app) · [🤖 AI Bots](#n8n-workflows--ai-agents) · [🗄️ Database](#database-schema) · [🚀 Quick Start](#quick-start) · [✨ Features](#key-features)
+
+</div>
 
 ---
 
 ## 📑 Table of Contents
 
-- [Overview](#overview)
-- [Architecture](#architecture)
+- [System Architecture](#system-architecture)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
-- [Mobile App (React Native / Expo)](#mobile-app-react-native--expo)
-- [Database (Supabase / PostgreSQL)](#database-supabase--postgresql)
-- [n8n Workflows (AI Agents & Automation)](#n8n-workflows-ai-agents--automation)
+- [Mobile App](#mobile-app)
+- [Database Schema](#database-schema)
+- [n8n Workflows & AI Agents](#n8n-workflows--ai-agents)
 - [PDF Invoice API](#pdf-invoice-api)
-- [Supabase Edge Functions](#supabase-edge-functions)
-- [Environment Variables & Configuration](#environment-variables--configuration)
-- [Setup & Installation](#setup--installation)
+- [Edge Functions](#supabase-edge-functions)
 - [Key Features](#key-features)
-- [Security Notes](#security-notes)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Security Considerations](#security-considerations)
+- [Future Roadmap](#future-roadmap)
 
 ---
 
-## Overview
-
-**Bharat Biz-Agent** is built for the **Neurathon 2026** hackathon. It provides:
-
-1. **Mobile App** — A React Native (Expo) app for the shopkeeper to manage the store via a rich dashboard, order management, inventory, reports, and profile settings.
-2. **Customer Telegram Bot** — An AI-powered Telegram bot where customers can browse products, place orders, send UPI payment screenshots for verification, and receive invoices.
-3. **Shopkeeper Telegram Bot** — A voice-first Telegram bot for the shopkeeper to manage stock, udhaar, orders, and sales by voice commands in Hindi/Hinglish.
-4. **Order Confirmation Webhook** — An n8n workflow that notifies customers via Telegram when orders are confirmed or rejected from the mobile app.
-5. **Invoice & QR Sub-workflow** — Generates PDF invoices and sends them along with shop UPI QR codes to customers via Telegram.
-6. **PDF Invoice API** — A Node.js/Express server using Puppeteer to generate PDF invoices from HTML templates, with TinyURL shortening.
-7. **Push Notifications** — A Supabase Edge Function that sends Expo push notifications to the shopkeeper's mobile device.
-
----
-
-## Architecture
+<a name="system-architecture"></a>
+## 📐 System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                         BHARAT BIZ-AGENT                            │
-├──────────────┬───────────────────┬─────────────────┬─────────────────┤
-│  Mobile App  │  Telegram Bots    │  Invoice API    │  Edge Functions │
-│  (Expo RN)   │  (n8n + Gemini)   │  (Express)      │  (Supabase)     │
-├──────────────┴───────────────────┴─────────────────┴─────────────────┤
-│                        Supabase (PostgreSQL)                        │
-│        Realtime • Storage • Row Level Security • Webhooks           │
-└──────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          🇮🇳  BHARAT BIZ-AGENT                              │
+├────────────────┬──────────────────┬──────────────────┬──────────────────────┤
+│   📱 Mobile    │   🤖 Telegram    │   📄 Invoice     │   🔔 Edge           │
+│   App (Expo)   │   Bots (n8n)     │   API (Express)  │   Functions          │
+├────────────────┴──────────────────┴──────────────────┴──────────────────────┤
+│                     ☁️  Supabase (PostgreSQL + Realtime)                    │
+│            Storage  •  Row Level Security  •  Webhooks  •  Auth            │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Data Flow:**
+### 🔄 Data Flow
 
 ```
-Customer (Telegram)                     Shopkeeper (Mobile App)
-       │                                        │
-       ▼                                        ▼
-  Customer Bot ──── order_ongoing ───── Orders Screen
-  (n8n + Gemini)     (Supabase)         (React Native)
-       │                                        │
-       ▼                                        ▼
-  Payment Screenshot ──→ AI OCR ──→ Verify ──→ Notification
-       │                                        │
-       ▼                                        ▼
-  Invoice PDF ◄── Invoice API ◄── Order Confirm Webhook
-  + UPI QR Code    (Puppeteer)     (n8n)
+     👤 Customer (Telegram)                    🏪 Shopkeeper (Mobile App)
+            │                                           │
+            ▼                                           ▼
+    ┌───────────────┐                          ┌──────────────────┐
+    │  Customer Bot  │◄── order_ongoing ───────►│  Orders Screen   │
+    │ (n8n + Gemini) │    (Supabase RT)         │  (React Native)  │
+    └───────┬───────┘                          └────────┬─────────┘
+            │                                           │
+            ▼                                           ▼
+    📸 Payment Screenshot                      ✅ Confirm / ❌ Reject
+            │                                           │
+            ▼                                           ▼
+    🤖 Gemini OCR ──→ Verify ──→ 🔔 Push Notification  │
+            │                                           │
+            ▼                                           ▼
+    📄 Invoice PDF ◄────── Invoice API ◄────── Order Webhook (n8n)
+    + 📱 UPI QR Code       (Puppeteer)
 ```
 
 ---
 
-## Tech Stack
+<a name="tech-stack"></a>
+## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Mobile App** | React Native (Expo SDK), TypeScript, MaterialTopTabs |
-| **Navigation** | `expo-router`, `@react-navigation/material-top-tabs` |
-| **Backend DB** | Supabase (PostgreSQL), Realtime subscriptions |
-| **AI / NLU** | Google Gemini 2.5 Flash (via n8n LangChain nodes) |
-| **Automation** | n8n (self-hosted workflow engine) |
-| **Telegram** | Telegram Bot API (via n8n nodes) |
-| **Voice** | Gemini Audio transcription (Hindi/Hinglish support) |
-| **Invoice** | Node.js + Express + Puppeteer (HTML→PDF) |
-| **URL Shortening** | TinyURL API |
-| **Push Notifications** | Expo Push API + Supabase Edge Functions (Deno) |
-| **Storage** | Supabase Storage (shop-assets, payment-screenshots) |
-| **i18n** | Custom React Context (English + Hindi) |
+| Layer | Technology | Purpose |
+|:---:|:---|:---|
+| 📱 | **React Native (Expo SDK)** | Cross-platform mobile app |
+| 🧭 | **Expo Router + MaterialTopTabs** | File-based routing with swipe navigation |
+| ☁️ | **Supabase (PostgreSQL)** | Database, Realtime, Storage, Auth |
+| 🧠 | **Google Gemini 2.5 Flash** | AI reasoning, voice transcription, OCR |
+| ⚡ | **n8n (Self-hosted)** | Workflow automation engine |
+| 💬 | **Telegram Bot API** | Customer & shopkeeper interfaces |
+| 🎙️ | **Gemini Audio API** | Hindi/Hinglish voice transcription |
+| 📄 | **Puppeteer (Express.js)** | HTML → PDF invoice generation |
+| 🔗 | **TinyURL API** | Invoice URL shortening |
+| 🔔 | **Expo Push + Edge Functions** | Real-time push notifications |
+| 🌐 | **Custom i18n Context** | Bilingual UI (English + हिंदी) |
 
 ---
 
-## Project Structure
+<a name="project-structure"></a>
+## 📁 Project Structure
 
 ```
 neurathon-final/
-├── app/                          # React Native Expo mobile app
+│
+├── 📱 app/                              # React Native Expo Mobile App
 │   ├── app/
-│   │   ├── _layout.tsx           # Root layout (fonts, splash, push notifs, realtime)
-│   │   ├── notifications.tsx     # Full notifications screen
+│   │   ├── _layout.tsx                  # Root: fonts, splash, push notifs, realtime
+│   │   ├── notifications.tsx            # Full notification center
 │   │   └── (tabs)/
-│   │       ├── _layout.tsx       # MaterialTopTabs layout + header with bell icon
-│   │       ├── index.tsx         # Dashboard (stats, recent orders, quick sale/udhaar)
-│   │       ├── orders.tsx        # Order management (filter, confirm, reject, complete)
-│   │       ├── inventory.tsx     # Product CRUD (search, stock +/-, add/edit modal)
-│   │       ├── reports.tsx       # Sales analytics (period selectors, breakdowns)
-│   │       └── profile.tsx       # Shop details, QR upload, language toggle
-│   ├── components/
-│   │   ├── Themed.tsx            # Theme-aware Text/View wrapper
-│   │   ├── LoadingScreen.tsx     # Loading spinner component
-│   │   └── ...
-│   ├── hooks/
-│   │   └── useAutoRefresh.ts     # Auto-refresh + focus-refresh hook
+│   │       ├── _layout.tsx              # Bottom tab bar + header with 🔔
+│   │       ├── index.tsx                # 📊 Dashboard (stats, quick sale/udhaar)
+│   │       ├── orders.tsx               # 📦 Order management
+│   │       ├── inventory.tsx            # 📋 Stock CRUD
+│   │       ├── reports.tsx              # 📈 Sales analytics
+│   │       └── profile.tsx              # 👤 Shop settings
 │   ├── lib/
-│   │   ├── supabase.ts           # Supabase client + TypeScript interfaces
-│   │   ├── api.ts                # API helpers (confirm/reject orders, quick sale/udhaar)
-│   │   ├── i18n.tsx              # Internationalization context (EN/HI)
-│   │   └── notifications.ts     # Push notification registration & listeners
-│   ├── app.json                  # Expo configuration
-│   └── package.json
+│   │   ├── supabase.ts                  # DB client + TypeScript interfaces
+│   │   ├── api.ts                       # Business logic helpers
+│   │   ├── i18n.tsx                     # EN/HI translations (50+ keys)
+│   │   └── notifications.ts            # Push notification manager
+│   └── hooks/
+│       └── useAutoRefresh.ts            # Auto-refresh + focus-refresh hook
 │
-├── database/
-│   ├── supabase_schema.sql       # Full database schema (10+ tables)
-│   └── migrations/
-│       ├── add_order_ongoing.sql         # order_ongoing table for lifecycle tracking
-│       ├── quick_transactions.sql        # Quick sale/udhaar transactions
-│       ├── add_telegram_id_to_customers.sql  # telegram_id + address columns
-│       ├── add_qr_image.sql              # QR image URL + storage bucket
-│       └── add_screenshot_storage.sql    # Payment screenshot storage
+├── 🗄️ database/
+│   ├── supabase_schema.sql              # Full schema (12+ tables)
+│   └── migrations/                      # 5 incremental migrations
 │
-├── pdf-invoice-api/
-│   ├── server.js                 # Express server (Puppeteer PDF generation)
-│   ├── templates/
-│   │   └── invoice.html          # Invoice HTML template (bilingual)
-│   ├── package.json
-│   └── README.md                 # VPS setup guide (Ubuntu/systemd)
+├── 📄 pdf-invoice-api/
+│   ├── server.js                        # Express + Puppeteer server
+│   └── templates/invoice.html           # Bilingual invoice template
 │
-├── supabase/
-│   └── functions/
-│       └── send-push-notification/
-│           └── index.ts          # Edge function: push via Expo API
+├── ⚡ supabase/functions/
+│   └── send-push-notification/index.ts  # Deno edge function
 │
-└── workflows/
-    ├── customer_telegram_bot.json       # AI Customer Agent (1221 lines)
-    ├── shopkeeper_telegram_bot.json     # AI Owner Agent (751 lines)
-    ├── order_confirmation_webhook.json  # Order status → Telegram (532 lines)
-    └── send_invoice_and_qr.json        # Invoice PDF + QR sub-workflow (216 lines)
+└── 🤖 workflows/
+    ├── customer_telegram_bot.json       # AI Customer Agent
+    ├── shopkeeper_telegram_bot.json     # AI Owner Agent (Voice-first)
+    ├── order_confirmation_webhook.json  # Order status notifications
+    └── send_invoice_and_qr.json         # Invoice + QR sub-workflow
 ```
 
 ---
 
-## Mobile App (React Native / Expo)
+<a name="mobile-app"></a>
+## 📱 Mobile App
 
-### Root Layout (`_layout.tsx`)
+The mobile app is built with **React Native (Expo)** and provides a complete store management dashboard for shopkeepers.
 
-- Loads custom fonts (SpaceMono)
-- Manages splash screen lifecycle
-- Registers Expo Push Notifications on mount
-- Sets up realtime Supabase notification listeners
-- Wraps entire app in `LanguageProvider` for i18n and `GestureHandlerRootView` for swipe gestures
+### Navigation
 
-### Tab Navigation (`(tabs)/_layout.tsx`)
+- **Swipe-enabled** MaterialTopTabs positioned at the bottom
+- **Custom header** with dynamic tab title + notification 🔔 with live unread badge
+- Tabs: **Dashboard** → **Orders** → **Inventory** → **Reports** → **Profile**
 
-- Uses **MaterialTopTabBar** positioned at the bottom, enabling **swipe gesture page transitions**
-- Custom global header with dynamic title per tab and a **notification bell icon** with a real-time unread badge count
-- Tabs: **Dashboard** | **Orders** | **Inventory** | **Reports** | **Profile**
-- Notification bell navigates to `/notifications`
+<details>
+<summary><b>🏠 Dashboard Screen</b></summary>
 
-### Screens
+- **Stats Grid** — Today's sales (₹), pending orders, low stock alerts, total customers
+- **Recent Orders** — Last 5 orders with status badges and payment info
+- **Quick Sale Modal** — Amount + optional customer name + optional item → `quick_transactions`
+- **Quick Udhaar Modal** — Amount + customer name (required) + item → `quick_transactions`
+- Auto-refreshes every 30s via `useAutoRefresh` hook
 
-#### 🏠 Dashboard (`index.tsx`)
-- **Stats Grid**: Today's sales (₹), pending orders, low stock alerts, total customers
-- **Recent Orders**: Last 5 orders with status badges and payment info
-- **Quick Action Buttons**: "Quick Sale" and "Record Udhaar" modals
-- **Quick Sale Modal**: Amount, optional customer name, optional item name → records to `quick_transactions` table
-- **Quick Udhaar Modal**: Amount, customer name (required), item name → records to `quick_transactions` table
-- Auto-refreshes every 30 seconds via `useAutoRefresh` hook
+</details>
 
-#### 📦 Orders (`orders.tsx`)
-- **Filter Tabs**: Pending | Confirmed | Completed | Rejected | All
-- **Order Cards** with customer name, phone, status badge, time ago, total amount
-- **Payment Tracking** via `order_ongoing` table — shows payment badges (PAID, MISMATCH, AWAITING, COMPLETED, CONFIRMED)
-- **Payment Warning Banners** for amount mismatches
-- **Expandable Details**: Order items, payment details (UTR, amount paid, sender, app, status), payment screenshot thumbnail (tappable)
-- **Action Buttons**: Confirm ✓ / Reject ✗ (pending), Mark Complete (confirmed)
-- Realtime subscriptions on both `orders` and `order_ongoing` tables
-- Auto-refreshes every 30 seconds
+<details>
+<summary><b>📦 Orders Screen</b></summary>
 
-#### 📋 Inventory (`inventory.tsx`)
-- **Search Bar** with clear button (searches English + Hindi product names)
-- **Low Stock Alert Banner** with count of low-stock products
-- **Product Cards**: Name (English + Hindi), category, price/unit, stock +/− buttons with instant update
-- **Low Stock Indicator**: Red left border + "LOW" badge on cards
-- **FAB (+)** to add new products
-- **Add/Edit Modal**: Product name, Hindi name, category, price, stock, unit, low stock threshold
-- **Delete** option in edit mode with confirmation dialog
+- **Filter Tabs** — Pending | Confirmed | Completed | Rejected | All
+- **Order Cards** — Customer name, phone, status badge, time ago, total ₹
+- **Payment Tracking** via `order_ongoing` — PAID / MISMATCH / AWAITING badges
+- **Payment Warning Banners** for amount mismatches (amount paid vs expected)
+- **Expandable Details** — Items list, UTR, sender, app, screenshot thumbnail (tappable)
+- **Actions** — ✅ Confirm / ❌ Reject (pending) • Mark Complete (confirmed)
+- Realtime subscriptions on `orders` + `order_ongoing`
 
-#### 📊 Reports (`reports.tsx`)
-- **Period Selector**: Today | This Week | This Month
-- **Revenue Summary Card** (LinearGradient): Total revenue, order count, average order value
-- **Sales Breakdown**: Quick Sales, Telegram Sales, Udhaar Given, Order Sales — each with icon and color
-- **Payment Breakdown**: Cash, UPI, Credit Given
-- **Pending Udhaar Section**: Top 5 customers with highest debt, phone, total udhaar, "Remind" button (Telegram icon)
-- **Download Reports** section (PDF / Excel — placeholder)
+</details>
 
-#### 👤 Profile (`profile.tsx`)
-- **Profile Header** (LinearGradient): Shop name, owner name, building icon
-- **Shop Details** (view/edit mode): Address, phone, UPI ID, GST number
-- **Quick Actions**: Open Shopkeeper Bot (Telegram deep link), Upload UPI QR Code (image picker → Supabase Storage), Export Data (coming soon)
-- **Language Toggle**: English / हिंदी switch with AsyncStorage persistence
-- **About**: App version (1.0.0), Help & Support (Telegram link)
+<details>
+<summary><b>📋 Inventory Screen</b></summary>
 
-#### 🔔 Notifications (`notifications.tsx`)
-- Full-screen notification list (not a tab, navigated from header bell)
-- Type-based icons and colors: new_order (green cart), payment_received (blue money), low_stock (red warning), payment_reminder (orange clock)
-- Unread indicator: Left orange border + dot
+- **Search Bar** — Searches English + Hindi product names
+- **Low Stock Alert** — Red banner with count of items below threshold
+- **Product Cards** — Name (EN + HI), category, ₹ price/unit, stock ±1 buttons
+- **Low Stock Indicator** — Red left border + "LOW" badge
+- **Add/Edit Modal** — Name, Hindi name, category, price, stock, unit, threshold
+- **Delete** with confirmation dialog
+
+</details>
+
+<details>
+<summary><b>📊 Reports Screen</b></summary>
+
+- **Period Selector** — Today | This Week | This Month
+- **Revenue Card** (gradient) — Total revenue, order count, average order value
+- **Sales Breakdown** — Quick Sales, Telegram, Udhaar, Order Sales
+- **Payment Breakdown** — Cash, UPI, Credit
+- **Pending Udhaar** — Top 5 debtors with amount + "Remind" button
+
+</details>
+
+<details>
+<summary><b>👤 Profile Screen</b></summary>
+
+- **Profile Header** (gradient) — Shop name, owner name
+- **Editable Details** — Address, phone, UPI ID, GST number
+- **Quick Actions** — Open Shopkeeper Bot, Upload UPI QR, Export Data
+- **Language Toggle** — English / हिंदी with persistent preference
+- **App Info** — Version, Help & Support link
+
+</details>
+
+<details>
+<summary><b>🔔 Notifications Screen</b></summary>
+
+- Fullscreen notification list (from header bell, not a tab)
+- **Type-based icons** — 🛒 new_order (green), 💰 payment (blue), ⚠️ low_stock (red), ⏰ reminder (orange)
+- **Unread indicator** — Orange left border + dot
 - **Mark All Read** button
-- Tap to mark read + navigate to relevant tab (Orders / Inventory)
-- Realtime subscription for new notifications
+- Tap → mark read + navigate to relevant tab
+- Realtime subscription for instant updates
+
+</details>
 
 ### Core Libraries
 
-#### `supabase.ts`
-- Supabase client initialized with URL + Anon Key
-- Uses `expo-secure-store` for auth token persistence
-- TypeScript interfaces for all database tables: `ShopProfile`, `Product`, `Customer`, `Order`, `OrderItem`, `OrderOngoing`, `Payment`, `UdhaarEntry`, `SalesData`, `Notification`, `QuickTransaction`
-
-#### `api.ts`
-- `confirmOrder(orderId, customerName, totalAmount)` — Updates order status + calls n8n webhook
-- `rejectOrder(orderId, customerName)` — Updates order status + calls n8n webhook + deducts stock
-- `generateUpiPayment(amount, upiId)` — Opens UPI deep link
-- `openShopkeeperBot()` / `openCustomerBot()` — Telegram deep links
-- `recordQuickSale(...)` / `recordQuickUdhaar(...)` — Inserts into `quick_transactions`
-- `markNotificationRead(id)` — Updates notification
-
-#### `i18n.tsx`
-- `LanguageProvider` React Context with `lang`, `setLang`, `t()` function
-- Supports `'en'` and `'hi'` languages
-- 50+ translation keys covering all UI labels
-- Language preference saved to `AsyncStorage`
-
-#### `notifications.ts`
-- `registerForPushNotifications()` — Gets Expo push token, saves to Supabase `push_tokens` table
-- `setupNotificationListeners()` — Handles foreground/background/tap interactions
-- `sendLocalNotification(title, body)` — Local fallback
-- `setupRealtimeNotifications(shopId)` — Supabase Realtime listener on `notifications` table, triggers local notifications
-
-#### `useAutoRefresh.ts` hook
-- Accepts a callback, interval (default 30s), and `refreshOnFocus` flag
-- Calls callback on mount, on interval, and on screen focus events
+| Module | Purpose |
+|:---|:---|
+| `supabase.ts` | Supabase client + `SHOP_ID` + TypeScript interfaces for all tables |
+| `api.ts` | `confirmOrder()`, `rejectOrder()`, `recordQuickSale()`, `recordQuickUdhaar()`, Telegram deep links |
+| `i18n.tsx` | `LanguageProvider` context — `lang`, `setLang`, `t()` — 50+ keys (EN/HI) |
+| `notifications.ts` | Push token registration, foreground/background handlers, Supabase Realtime listener |
+| `useAutoRefresh.ts` | Auto-refresh every 30s + refresh on screen focus |
 
 ---
 
-## Database (Supabase / PostgreSQL)
+<a name="database-schema"></a>
+## 🗄️ Database Schema
 
-### Core Schema (`supabase_schema.sql`)
+### Core Tables
 
 | Table | Purpose | Key Columns |
-|---|---|---|
-| `shop_profiles` | Store details | id, owner_phone, shop_name, address, upi_id, gst_number, qr_image_url |
-| `customers` | Customer records | id, shop_id, name, phone, telegram_id, address, total_udhaar |
-| `products` | Inventory | id, shop_id, name, name_hindi, category, price, stock, unit, low_stock_threshold |
-| `orders` | Customer orders | id, shop_id, customer_name, customer_phone, status, payment_status, total_amount, notes |
-| `order_items` | Line items per order | id, order_id, product_name, quantity, unit, price, subtotal (generated) |
-| `order_ongoing` | Order lifecycle tracking | id, order_id, customer_telegram_id, status, items_json, total_amount, payment_data, warning_message, screenshot_url |
-| `payments` | Payment records | id, order_id, amount, method, upi_screenshot_url |
-| `udhaar_ledger` | Credit/debit ledger | id, shop_id, customer_id, type (credit/payment), amount, description |
-| `sales` | Daily sales summary | id, shop_id, sale_date, total_orders, total_amount, cash_amount, upi_amount, credit_amount |
-| `notifications` | Push notification records | id, shop_id, type, title, body, data, is_read |
-| `push_tokens` | Expo push tokens | id, shop_id, token, device_info, is_active |
-| `quick_transactions` | Quick sale/udhaar entries | id, shop_id, type, amount, customer_name, item_name, payment_method |
+|:---|:---|:---|
+| `shop_profiles` | Store details | owner_phone, shop_name, upi_id, gst_number, qr_image_url |
+| `customers` | Customer records | name, phone, telegram_id, address, total_udhaar |
+| `products` | Inventory items | name, name_hindi, category, price, stock, unit, low_stock_threshold |
+| `orders` | Customer orders | customer_name, status, payment_status, total_amount |
+| `order_items` | Line items | product_name, quantity, unit, price, subtotal (auto-calc) |
+| `order_ongoing` | Order lifecycle | customer_telegram_id, items_json, payment_data, screenshot_url |
+| `payments` | Payment records | amount, method, upi_screenshot_url |
+| `udhaar_ledger` | Credit/debit ledger | type (credit/payment), amount, description |
+| `sales` | Daily summary | total_orders, total_amount, cash/upi/credit split |
+| `notifications` | Push records | type, title, body, is_read |
+| `push_tokens` | Expo tokens | expo_push_token, device_info, is_active |
+| `quick_transactions` | Walk-in sales | type (sale/udhaar), amount, customer_name, item_name |
 
 ### Database Features
 
-- **Triggers**: `update_updated_at()` on most tables, auto-calculates `subtotal` on `order_items`, auto-updates `total_udhaar` on `customers` when udhaar_ledger changes
-- **Row Level Security**: Enabled on all tables (currently `USING (true)` — needs tightening for production)
-- **Realtime**: Enabled for `orders`, `order_ongoing`, `notifications`, `products`
-- **Storage Buckets**: `shop-assets` (UPI QR codes), `payment-screenshots` (payment proof images)
-- **Unique Indexes**: `customers(shop_id, telegram_id)` for Telegram customer identification
+| Feature | Details |
+|:---|:---|
+| **Triggers** | Auto-update `updated_at`, auto-calculate `subtotal`, auto-sync `total_udhaar` |
+| **Row Level Security** | Enabled on all tables |
+| **Realtime** | `orders`, `order_ongoing`, `notifications`, `products` |
+| **Storage Buckets** | `shop-assets` (QR codes), `payment-screenshots` (payment proof) |
+| **Unique Indexes** | `customers(shop_id, telegram_id)` for Telegram identity |
 
-### Migrations
+<details>
+<summary><b>📜 Migration History (5 files)</b></summary>
 
-| File | Description |
-|---|---|
-| `add_order_ongoing.sql` | Creates `order_ongoing` table with indexes, RLS, realtime, auto-update trigger |
-| `quick_transactions.sql` | Creates `quick_transactions` table for anonymous sales/udhaar |
-| `add_telegram_id_to_customers.sql` | Adds `telegram_id` and `address` columns to customers, unique index |
-| `add_qr_image.sql` | Adds `qr_image_url` to `shop_profiles`, creates `shop-assets` storage bucket with public policies |
-| `add_screenshot_storage.sql` | Adds `screenshot_url` to `order_ongoing`, creates `payment-screenshots` storage bucket |
+| Migration | Description |
+|:---|:---|
+| `add_order_ongoing.sql` | `order_ongoing` table + indexes + RLS + realtime + trigger |
+| `quick_transactions.sql` | `quick_transactions` for anonymous sales/udhaar |
+| `add_telegram_id_to_customers.sql` | `telegram_id` + `address` columns + unique index |
+| `add_qr_image.sql` | `qr_image_url` on `shop_profiles` + `shop-assets` bucket |
+| `add_screenshot_storage.sql` | `screenshot_url` on `order_ongoing` + `payment-screenshots` bucket |
+
+</details>
 
 ---
 
-## n8n Workflows (AI Agents & Automation)
+<a name="n8n-workflows--ai-agents"></a>
+## 🤖 n8n Workflows & AI Agents
 
-### 1. Customer Telegram Bot (`customer_telegram_bot.json`)
+### 1️⃣ Customer Telegram Bot
 
-**Purpose**: AI-powered shopping assistant for customers via Telegram.
+> 🛒 AI-powered shopping assistant for customers
 
-**Flow**:
 ```
-Telegram Trigger → Is Photo? ──[Yes]─→ Get Photo → Upload Screenshot → Analyze (Gemini OCR) → Format
-                              └─[No]──→ Is Voice? ──[Yes]─→ Get Voice → Transcribe (Gemini) → Format
-                                                   └─[No]──→ Format Text
-                         ↓
-                   Merge Messages → Fetch Store Info → Combine → AI Customer Agent → Send Response
+📩 Telegram Message
+    ├── 📸 Photo? → Upload to Supabase → Gemini OCR → Payment Analysis
+    ├── 🎙️ Voice? → Gemini Transcription → Text
+    └── 💬 Text? → Direct
+            ↓
+    🔄 Merge → 🏪 Fetch Store Info → 🤖 AI Customer Agent → 📤 Reply
 ```
 
-**AI Agent Tools** (Supabase operations):
+<details>
+<summary><b>🧰 AI Agent Tool List (12 tools)</b></summary>
+
 | Tool | Operation |
-|---|---|
+|:---|:---|
 | Check Customer | Read `customers` by telegram_id |
-| Register Customer | Create in `customers` |
-| Read Products | Search `products` by name (ilike) |
-| Create Order Ongoing | Insert into `order_ongoing` (pre-payment) |
+| Register Customer | Create new customer record |
+| Read Products | Search products by name (ilike) |
+| Create Order Ongoing | Insert pre-payment order |
 | Read Order Ongoing | Get pending order by telegram_id |
-| Update Order Ongoing | Update status, payment_data, screenshot_url |
-| Create Order | Insert into `orders` (post-payment) |
-| Create Order Item | Insert into `order_items` |
-| Read Orders | Get customer's orders |
-| Send Notification | Create notification for shopkeeper |
-| Send Invoice and Payment QR | Calls sub-workflow |
-| Get Shop QR | Reads shop QR image URL |
+| Update Order Ongoing | Update payment status/data |
+| Create Order | Insert confirmed order |
+| Create Order Item | Add line items |
+| Read Orders | Get customer's order history |
+| Send Notification | Push to shopkeeper |
+| Send Invoice & QR | Trigger sub-workflow |
+| Get Shop QR | Fetch QR image URL |
 
-**Key Behaviors**:
-- Registers new customers (name, phone, address)
-- Shows products with prices and emojis
-- Creates `order_ongoing` record before payment (status: `payment_pending`)
-- Sends invoice PDF + UPI QR code via sub-workflow
-- Uses Gemini to analyze payment screenshot OCR → extracts UTR, amount, sender, app, status
-- Compares payment amount with expected → sets `payment_verified` or `payment_warning`
-- Creates final order only AFTER payment screenshot is received
-- Conversation memory per chat_id (20 messages window)
-- Temperature: 0.7
+</details>
 
-### 2. Shopkeeper Telegram Bot (`shopkeeper_telegram_bot.json`)
-
-**Purpose**: Voice-first management bot for the shop owner.
-
-**Flow**:
-```
-Telegram Trigger → Is Voice? ──[Yes]─→ Get Voice → Transcribe (Gemini) → Format
-                              └─[No]──→ Format Text
-                         ↓
-                   Merge Messages → AI Owner Agent → Send Response
-```
-
-**AI Agent Tools**:
-| Tool | Operation |
-|---|---|
-| Read Products | Search products by name |
-| Update Product Stock | Change stock quantity |
-| Search Customer | Find customer by name |
-| Create Customer | Add new customer |
-| Add Udhaar | Record credit (udhaar_ledger) |
-| Record Payment | Record payment received (udhaar_ledger) |
-| Get Pending Udhaar | List all customers with pending credit |
-| Read Orders | Get orders by status |
-| Update Order | Change order status |
-| Read Sales | Get sales data |
-
-**Key Behaviors**:
-- Supports Hindi/Hinglish voice commands (e.g., "Rice ka stock?", "Amit ko 200 ka udhaar likho")
-- Inventory management, sales reports, udhaar tracking, order management
-- Conversation memory per owner chat_id (30 messages window)
-- Temperature: 0.5 (more deterministic than customer bot)
-
-### 3. Order Confirmation Webhook (`order_confirmation_webhook.json`)
-
-**Purpose**: When the shopkeeper confirms/rejects an order from the mobile app, this workflow notifies the customer on Telegram.
-
-**Flow (Confirmed)**:
-```
-POST Webhook → Is Confirmed? → Get Order Ongoing → Extract Chat ID → Fetch Items
-  → Generate PAID Invoice (PDF API) → Mark Ongoing Completed
-  → Send Confirmation to Customer (Telegram)
-  → Download Invoice PDF → Send as Document (Telegram)
-```
-
-**Flow (Rejected)**:
-```
-POST Webhook → Is Rejected? → Get Order Ongoing (Reject) → Extract Chat ID
-  → Mark Ongoing Rejected → Send Rejection to Customer (Telegram)
-```
-
-**Triggered by**: `api.ts` → `confirmOrder()` / `rejectOrder()` which POST to the n8n webhook.
-
-### 4. Send Invoice and QR (`send_invoice_and_qr.json`)
-
-**Purpose**: Sub-workflow called by the Customer Bot to generate and send invoice + QR.
-
-**Flow**:
-```
-Called by Another Workflow ──→ Generate Invoice API (PDF) → Download PDF → Send PDF (Telegram)
-                            └─→ Get Shop QR (Supabase) → Download QR Image → Send Photo (Telegram)
-```
-
-Two parallel paths: one for the invoice PDF, one for the shop's UPI QR code image.
+**Key Behaviors:**
+- 🆕 Auto-registers new customers (name, phone, address)
+- 🛍️ Shows product catalog with prices and emojis
+- 📋 Creates `order_ongoing` before payment → sends invoice + UPI QR
+- 📸 Gemini OCR on payment screenshots → extracts UTR, amount, sender, app
+- ✅ Amount match → `payment_verified` | ⚠️ Mismatch → `payment_warning`
+- 🧠 Conversation memory: 20 messages/session | Temperature: 0.7
 
 ---
 
-## PDF Invoice API
+### 2️⃣ Shopkeeper Voice Bot
 
-### Server (`pdf-invoice-api/server.js`)
+> 🎙️ Voice-first store management for the owner
 
-- **Framework**: Express.js (Port 3001)
-- **PDF Generation**: Puppeteer (headless Chromium) renders HTML template → PDF
-- **Template**: `templates/invoice.html` with placeholder substitution
-- **URL Shortening**: TinyURL API shortens the hosted PDF URL
-- **Endpoints**:
-  - `POST /api/invoice/generate` — Generates invoice PDF, returns `{ original_url, short_url }`
-  - `GET /invoices/:filename` — Serves static PDF files
-- **Auto-cleanup**: Optional cron to delete PDFs older than 7 days
+```
+📩 Telegram Message
+    ├── 🎙️ Voice? → Gemini Transcription → Hindi/Hinglish Text
+    └── 💬 Text? → Direct
+            ↓
+    🤖 AI Owner Agent → 📤 Reply
+```
 
-### Invoice Template
+<details>
+<summary><b>🧰 AI Agent Tool List (10 tools)</b></summary>
 
-- Bilingual labels (English/Hindi)
-- Shop and customer details
-- Itemized table with quantity, unit price, subtotal
-- Payment status (PAID ✅ / UNPAID)
-- UPI ID and thank-you message
+| Tool | Operation |
+|:---|:---|
+| Read Products | Search inventory |
+| Update Product Stock | Change stock quantity |
+| Search Customer | Find by name |
+| Create Customer | Add new customer |
+| Add Udhaar | Record credit given |
+| Record Payment | Record payment received |
+| Get Pending Udhaar | List all debtors |
+| Read Orders | Filter by status |
+| Update Order | Change order status |
+| Read Sales | Sales reports |
+
+</details>
+
+**Example Voice Commands:**
+- 🗣️ *"Rice ka stock?"* → Shows rice inventory
+- 🗣️ *"Amit ko 500 ka udhaar likho"* → Records ₹500 credit for Amit
+- 🗣️ *"Aaj ka sales batao"* → Today's sales report
+- 🧠 Conversation memory: 30 messages/session | Temperature: 0.5
+
+---
+
+### 3️⃣ Order Confirmation Webhook
+
+> 🔔 Notifies customers when orders are confirmed/rejected from the app
+
+```
+📡 Webhook (Order Status Change)
+    ├── ✅ Confirmed → Get Details → Generate PAID Invoice → Send to Customer
+    └── ❌ Rejected  → Mark Rejected → Notify Customer
+```
+
+---
+
+### 4️⃣ Invoice & QR Sub-workflow
+
+> 📄 Generates and sends invoice PDF + UPI QR code
+
+```
+🔄 Called by Other Workflows
+    ├── 📄 Generate Invoice (PDF API) → Download → Send via Telegram
+    └── 📱 Get Shop QR (Supabase) → Download → Send via Telegram
+```
+
+---
+
+<a name="pdf-invoice-api"></a>
+## 📄 PDF Invoice API
+
+| Component | Details |
+|:---|:---|
+| **Server** | Express.js on port 3001 |
+| **PDF Engine** | Puppeteer (headless Chromium) |
+| **Template** | Bilingual HTML (EN + HI labels) |
+| **URL Shortener** | TinyURL API |
+| **Endpoints** | `POST /api/invoice/generate` → `{ original_url, short_url }` |
+| | `GET /invoices/:filename` → Static PDF serving |
+
+<details>
+<summary><b>📄 Invoice Template Features</b></summary>
+
+- Shop + customer details header
+- Itemized table (qty × unit price = subtotal)
+- Payment status badge (PAID ✅ / UNPAID)
+- UPI ID display
+- Thank-you footer with shop branding
 - Professional styling with system fonts
 
-### Deployment
-
-See `pdf-invoice-api/README.md` for full Ubuntu VPS setup:
-- Node.js 20.x installation
-- Chromium dependencies
-- systemd service configuration
-- `ufw` firewall rules
-- Puppeteer environment variables
+</details>
 
 ---
 
-## Supabase Edge Functions
+<a name="supabase-edge-functions"></a>
+## 🔔 Supabase Edge Functions
 
-### `send-push-notification/index.ts`
+### `send-push-notification`
 
-- **Runtime**: Deno (Supabase Edge Functions)
-- **Trigger**: Supabase Database Webhook on `notifications` INSERT
-- **Process**:
-  1. Receives webhook payload with new notification record
-  2. Creates Supabase admin client with Service Role Key
-  3. Fetches active `push_tokens` for the notification's `shop_id`
-  4. Sends push notifications via [Expo Push API](https://exp.host/--/api/v2/push/send)
-  5. Handles `DeviceNotRegistered` errors by deactivating stale tokens
-- **Environment Variables**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+| Attribute | Value |
+|:---|:---|
+| **Runtime** | Deno (Supabase Edge Functions) |
+| **Trigger** | Database Webhook on `notifications` INSERT |
+| **Push Service** | [Expo Push API](https://exp.host/--/api/v2/push/send) |
+| **Error Handling** | Auto-deactivates stale `DeviceNotRegistered` tokens |
 
 ---
 
-## Environment Variables & Configuration
+<a name="key-features"></a>
+## ✨ Key Features
 
-### Mobile App (`app/lib/supabase.ts`)
+<table>
+<tr>
+<td width="50%">
 
-| Variable | Current Status | Description |
-|---|---|---|
-| `SUPABASE_URL` | Hardcoded | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Hardcoded | Supabase anonymous key |
-| `SHOP_ID` | Hardcoded across screens | `c1b7bdf8-5661-4bdb-bfb3-ad11fff0adc4` |
+### 🤖 AI-Powered Bots
+- Google Gemini 2.5 Flash NLU
+- Voice commands (Hindi/Hinglish/English)
+- Payment screenshot OCR
+- Conversational memory (20-30 msgs)
 
-> ⚠️ **These should be migrated to environment variables for production.**
+### 💳 Smart Payment Flow
+1. Customer browses via Telegram
+2. Bot sends invoice PDF + UPI QR
+3. Customer pays & sends screenshot
+4. Gemini OCR verifies payment
+5. Shopkeeper confirms via app
+6. Customer gets paid invoice
 
-### PDF Invoice API
+</td>
+<td width="50%">
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | 3001 | Server port |
-| `HOST` | 0.0.0.0 | Bind address |
+### 📱 Mobile Dashboard
+- Real-time updates (Supabase Realtime)
+- Push notifications (Expo + Edge Functions)
+- Swipe navigation (MaterialTopTabs)
+- Bilingual UI (EN / हिंदी)
+- Quick sale & udhaar recording
 
-### Supabase Edge Functions
+### 📊 Business Analytics
+- Period-based reports (day/week/month)
+- Sales breakdown by source
+- Payment method breakdown
+- Pending udhaar tracking
+- Top debtor customer lists
 
-| Variable | Description |
-|---|---|
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (full access) |
-
-### n8n Workflows
-
-- Store Telegram bot API credentials in n8n credential manager
-- Store Supabase API credentials in n8n credential manager
-- Store Google Gemini API key in n8n credential manager
+</td>
+</tr>
+</table>
 
 ---
 
-## Setup & Installation
+<a name="quick-start"></a>
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
-- npm / yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Supabase account + project
-- n8n instance (self-hosted or cloud)
-- Telegram bots (create via @BotFather)
-- Google Gemini API key
+| Requirement | Version |
+|:---|:---|
+| Node.js | 20+ |
+| Expo CLI | Latest |
+| Supabase | Account + Project |
+| n8n | Self-hosted or Cloud |
+| Telegram | 2 Bots via @BotFather |
+| Google AI | Gemini API Key |
 
-### 1. Mobile App
+### 1️⃣ Mobile App
 
 ```bash
 cd app
+cp .env.example .env        # Fill in your Supabase credentials
 npm install
-npx expo start
+npx expo start               # Scan QR with Expo Go
 ```
 
-Scan the QR code with Expo Go (Android/iOS) or run on emulator.
+### 2️⃣ Database
 
-### 2. Database Setup
+```bash
+# In Supabase SQL Editor:
+# 1. Run database/supabase_schema.sql
+# 2. Run each migration in database/migrations/ (in order)
+# 3. Create storage buckets: shop-assets (public), payment-screenshots (public)
+# 4. Set up Database Webhook: notifications INSERT → send-push-notification
+```
 
-1. Create a Supabase project
-2. Run `database/supabase_schema.sql` in the SQL editor
-3. Run each migration in `database/migrations/` in order
-4. Create storage buckets: `shop-assets` (public) and `payment-screenshots` (public)
-5. Configure Database Webhook: `notifications` INSERT → `send-push-notification` Edge Function
-
-### 3. PDF Invoice API
+### 3️⃣ PDF Invoice API
 
 ```bash
 cd pdf-invoice-api
+cp .env.example .env         # Set HOST and PORT
 npm install
-node server.js
+node server.js               # Runs on port 3001
 ```
 
-For production deployment, see `pdf-invoice-api/README.md`.
-
-### 4. Supabase Edge Functions
+### 4️⃣ Edge Functions
 
 ```bash
 supabase functions deploy send-push-notification
 supabase secrets set SUPABASE_URL=<your-url> SUPABASE_SERVICE_ROLE_KEY=<your-key>
 ```
 
-### 5. n8n Workflows
+### 5️⃣ n8n Workflows
 
-1. Import each JSON from `workflows/` into your n8n instance
-2. Configure credentials: Telegram Bot (customer + shopkeeper), Supabase, Google Gemini
+```
+1. Import each JSON from workflows/ into n8n
+2. Configure credentials: Telegram Bot, Supabase, Google Gemini
 3. Activate all 4 workflows
+```
 
 ---
 
-## Key Features
+<a name="environment-variables"></a>
+## ⚙️ Environment Variables
 
-### 🤖 AI-Powered Bots
-- **Natural Language Understanding** via Google Gemini 2.5 Flash
-- **Voice commands** in Hindi/Hinglish/English (Gemini audio transcription)
-- **Payment screenshot OCR** (Gemini image analysis) — auto-extracts UTR, amount, sender, app
-- **Conversational memory** per user session (20-30 message window)
+<details>
+<summary><b>View all environment variables</b></summary>
 
-### 📱 Mobile App
-- **Real-time updates** via Supabase Realtime (orders, products, notifications)
-- **Push notifications** via Expo Push API + Supabase Edge Functions
-- **Swipe navigation** with MaterialTopTabs
-- **Bilingual UI** (English / हिंदी) with persistent language preference
-- **Quick sale/udhaar** recording for walk-in customers
-- **Stock management** with low-stock alerts and +/- buttons
-- **UPI QR code upload** via image picker + Supabase Storage
+### Mobile App (`app/.env`)
 
-### 💳 Payment Flow
-1. Customer adds items to cart via Telegram bot
-2. Bot creates `order_ongoing` (payment_pending) + sends invoice PDF + UPI QR code
-3. Customer sends payment screenshot
-4. Gemini OCR extracts payment details
-5. Bot verifies amount match → creates order → notifies shopkeeper
-6. Shopkeeper confirms/rejects from mobile app
-7. Customer receives confirmation + paid invoice via Telegram
+| Variable | Description |
+|:---|:---|
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `EXPO_PUBLIC_SHOP_ID` | Shop UUID |
 
-### 📊 Business Analytics
-- Period-based reports (today/week/month)
-- Sales breakdown by source (quick, Telegram, order, udhaar)
-- Payment breakdown (cash, UPI, credit)
-- Pending udhaar tracking with reminder button
-- Top debtor customers list
+### PDF Invoice API (`pdf-invoice-api/.env`)
 
-### 📄 Invoice System
-- Auto-generated PDF invoices via Puppeteer
-- Bilingual template (English + Hindi labels)
-- Sent as Telegram document + shortened URL
-- Generated on order creation AND on confirmation
+| Variable | Default | Description |
+|:---|:---|:---|
+| `PORT` | 3001 | Server port |
+| `HOST` | 0.0.0.0 | Bind address |
+
+### Supabase Edge Functions
+
+| Variable | Description |
+|:---|:---|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (full access) |
+
+### n8n Credentials (via Credential Manager)
+
+- Telegram Bot Token (Customer Bot)
+- Telegram Bot Token (Shopkeeper Bot)
+- Supabase API credentials
+- Google Gemini API Key
+
+</details>
 
 ---
 
-## Security Notes
+<a name="security-considerations"></a>
+## 🔒 Security Considerations
 
 > [!WARNING]
-> The following items need to be addressed before production deployment:
+> **Production hardening checklist — address before deploying:**
 
-1. **RLS Policies**: All tables use `USING (true)` — must be tightened to restrict access based on `shop_id` ownership
-2. **Hardcoded Credentials**: Supabase URL and Anon Key are hardcoded in `supabase.ts` — should use environment variables
-3. **Hardcoded Shop ID**: `SHOP_ID` constant is repeated across all screen files — should come from authenticated user session
-4. **Service Role Key**: Used in Edge Function — ensure it's properly set as environment secret, never client-side
-5. **Storage Policies**: Storage buckets have public read/write — should be restricted in production
-6. **API Keys in Workflows**: n8n workflow JSONs contain credential IDs — ensure n8n instance is properly secured
-
----
-
-## License
-
-Built for **Neurathon 2026** Hackathon.
+| Item | Status | Action Required |
+|:---|:---:|:---|
+| RLS Policies | ⚠️ | Tighten from `USING (true)` to shop_id ownership checks |
+| Credentials | ✅ | Migrated to `.env` files (excluded from git) |
+| Service Role Key | ✅ | Edge Function environment secrets only |
+| Storage Policies | ⚠️ | Restrict public read/write on buckets |
+| n8n Security | ⚠️ | Ensure n8n instance is properly secured |
 
 ---
 
-<p align="center">
-  Made with ❤️ for Indian Kirana Stores 🇮🇳
-</p>
+<a name="future-roadmap"></a>
+## 🗺️ Future Roadmap
+
+- 🏪 Multi-store support with role-based access
+- 📈 AI-powered inventory predictions & auto-reorder
+- 💯 Customer credit scoring
+- 📱 WhatsApp Business API integration
+- 🧾 GST-compliant invoice generation
+- 🚚 Delivery tracking with rider assignment
+- ⭐ Customer loyalty & rewards program
+
+---
+
+<div align="center">
+
+### Built for 🏆 Neurathon 2026
+
+Made with ❤️ for Indian Kirana Stores 🇮🇳
+
+---
+
+**⭐ Star this repo if you found it useful!**
+
+</div>
